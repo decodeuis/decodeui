@@ -1,0 +1,20 @@
+import type { SetStoreFunction, Store } from "solid-js/store";
+
+import { getExistingOrDefaultTxnValue } from "../value/getExistingOrDefaultTxnValue";
+import { replaceVertexProperties } from "~/lib/graph/mutate/core/vertex/replaceVertexProperties";
+import type { GraphInterface } from "~/lib/graph/context/GraphInterface";
+
+export function setPreventUndoAtOrBeforeIndex(
+  txnId: number,
+  graph: Store<GraphInterface>,
+  setGraph: SetStoreFunction<GraphInterface>,
+) {
+  if (!txnId) {
+    return;
+  }
+  const txnValue = getExistingOrDefaultTxnValue(txnId, graph);
+  txnValue.preventUndoBeforeIndex = txnValue.activeUndoIndex;
+  replaceVertexProperties(0, `txn${txnId}`, graph, setGraph, txnValue, {
+    cloneProperties: false,
+  });
+}

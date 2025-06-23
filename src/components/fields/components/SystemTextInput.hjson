@@ -1,0 +1,108 @@
+{
+    vertexes: [
+      {
+        id: "root",
+        L: "Attr",
+        P: {
+          displayOrder: 1,
+          componentName: "Html",
+          props: '''
+// Access component props from args.contextData.props
+const props = args.contextData.props || {};
+
+// Create input element properties
+const as = props.type === "textarea" ? "textarea" : "input";
+const type = props.type === "textarea" ? undefined : (props.type || "text");
+const placeholder = props.placeholder || "";
+const disabled = props.disabled;
+const readOnly = props.readOnly;
+const originalValue = props.value ?? args.data?.P[args.contextData.props.key];
+const value = props.type === "checkbox" 
+  ? { checked: !!originalValue } 
+  : { value: originalValue !== undefined ? originalValue : "" };
+const maxLength = props.maxLength;
+const minLength = props.minLength;
+const required = props.required;
+const rows = props.rows || (props.type === "textarea" ? 3 : undefined);
+const error = props.error;
+
+// Define the onChange handler
+const onChange = (event) => {
+  if (disabled || readOnly) {
+    return;
+  }
+  
+  const target = event.target;
+  let newValue;
+  
+  if (props.type === "checkbox") {
+    newValue = target.checked;
+  } else if (props.type === "number") {
+    const targetValue = target.value.trim();
+    if (targetValue === "") {
+      newValue = "";
+    } else {
+      const parsedValue = Number.parseFloat(targetValue);
+      newValue = isNaN(parsedValue) ? "" : parsedValue;
+    }
+  } else if (props.type === "file") {
+    const files = target.files;
+    if (files && files.length > 0) {
+      newValue = files;
+    } else {
+      return; // No files selected, do nothing
+    }
+  } else if (props.type === "date") {
+    // this is not ISO date but most of the time we need this
+    newValue = target.value;
+    /* const dateValue = target.value;
+    if (dateValue) {
+      try {
+        // This will convert to ISO format
+        const date = new Date(dateValue);
+        if (!isNaN(date.getTime())) {
+          newValue = date.toISOString();
+        }
+      } catch (e) {
+        console.error("Invalid date format", e);
+      }*/
+  } else {
+    newValue = target.value;
+  }
+  
+  // Use the key from props to update the data
+  if (props.context.onChange) {
+    props.context.onChange(newValue);
+  }
+  
+  // Force the input value to update the props.value,
+  // In SolidJs when the component prop value is not changed (after onChange), its value is not updated,
+  // so input field display incorrect value, because the value is not updated.
+  // this will fix the issue.
+  // if (props.type !== "checkbox" && originalValue !== target.value) {
+  //   target.value = originalValue ?? "";
+  // }
+};
+
+// Return the regular properties
+return {
+...props,
+  as,
+  type,
+  placeholder,
+  disabled,
+  readOnly,
+  ...value,
+  maxLength,
+  minLength,
+  required,
+  rows,
+  error,
+  onChange
+};
+''',
+        },
+      },
+    ],
+    edges: [],
+  }
