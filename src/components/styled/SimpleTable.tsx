@@ -55,7 +55,30 @@ export function TableBodyCell(
         animation: fade 0.4s;
         align-content: center;
         padding: 2px;
-        text-align: center;
+        max-height: 150px;
+        overflow: auto;
+        
+        /* Thin scrollbar styling */
+        scrollbar-width: thin;
+        scrollbar-color: \${args.theme.var.color.border} transparent;
+        
+        &::-webkit-scrollbar {
+          width: 4px;
+          height: 4px;
+        }
+        
+        &::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        &::-webkit-scrollbar-thumb {
+          background: \${args.theme.var.color.border};
+          border-radius: 2px;
+        }
+        
+        &::-webkit-scrollbar-thumb:hover {
+          background: \${args.theme.var.color.border_dark_200};
+        }
       }\`;`,
         props.index && props.index % 2 !== 0
           ? `return \`._id { background-color: \${args.theme.var.color.primary_light_800}; color: \${args.theme.var.color.primary_light_800_text}; }\`;`

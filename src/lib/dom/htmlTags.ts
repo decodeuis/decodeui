@@ -153,7 +153,7 @@ export const interactiveElements = ["details", "dialog", "summary", "menuitem"];
 export const webComponentElements = ["slot", "template"];
 
 // Scripting elements
-export const scriptingElements = ["script", "noscript"];
+export const scriptingElements = ["script"]; // "noscript"
 
 // Editing elements
 export const editingElements = ["del", "ins"];
@@ -361,11 +361,15 @@ export const htmlTagsTree = {
     //   id: "web-component-elements",
     //   label: "Web Component Elements"
     // },
-    // {
-    //   children: scriptingElements.map(tag => ({ children: [], id: tag, label: tag })),
-    //   id: "scripting-elements",
-    //   label: "Scripting Elements"
-    // },
+    {
+      children: scriptingElements.map((tag) => ({
+        children: [],
+        id: tag,
+        label: tag,
+      })),
+      id: "scripting-elements",
+      label: "Scripting Elements",
+    },
     {
       children: editingElements.map((tag) => ({
         children: [],

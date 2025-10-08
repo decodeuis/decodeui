@@ -42,7 +42,7 @@ export function DropdownMenu(
       flip: props.useFlip ?? true, // Automatically flip the dropdown if it doesn't fit
       offset: props.offset,
       shift: {
-        padding: props.padding ?? 8,
+        // padding: props.padding ?? 8, // giving error on development
         boundary: props.boundary as any,
       }, // Adjust the dropdown to stay within the viewport with a padding of 8px
       size: props.useSize ? { fitViewPort: true, matchSize: true } : undefined,

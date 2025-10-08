@@ -3,6 +3,8 @@ dist
 .solid
 .output
 .vercel
+.netlify
+netlify
 .vinxi
 
 # Environment
@@ -27,6 +29,7 @@ gitignore
 Thumbs.db
 .history
 public/profile_images/
+beep
 
 # Playwright
 /test-results/
@@ -35,4 +38,4 @@ public/profile_images/
 /playwright/.cache/
 
 /temp
-
+**/.claude/settings.local.json

@@ -4,7 +4,7 @@ import { createActivityLog } from "~/cypher/mutate/activity/createActivityLog";
 import { APIError } from "~/lib/api/server/apiErrorHandler";
 import type { Vertex } from "~/lib/graph/type/vertex";
 
-export type DeletableVertexType = "Page" | "EmailTemplate" | "Component";
+export type DeletableVertexType = "Page" | "EmailTemplate" | "Component" | "Function" | "Theme";
 
 export async function deleteVertex(
   dbSession: Session,
@@ -39,11 +39,15 @@ export async function deleteVertex(
       vertexType = "EmailTemplate";
     } else if (labels.includes("Component")) {
       vertexType = "Component";
+    } else if (labels.includes("Function")) {
+      vertexType = "Function";
+    } else if (labels.includes("Theme")) {
+      vertexType = "Theme";
     }
 
     if (!vertexType) {
       throw new APIError(
-        "Vertex is not a Page, EmailTemplate, or Component",
+        `Vertex is not a Page, EmailTemplate, Component, Function, or Theme. Found labels: ${labels.join(", ")}. Vertex ID: ${vertexId}. Vertex key: ${deletedVertex.P.key || "undefined"}`,
         400,
       );
     }
@@ -127,39 +131,42 @@ export async function deleteVertex(
 
     // Delete preview relationship and associated File node
     // Page, EmailTemplate, and Component can have preview files
-    let previewRelType: string;
+    let previewRelType: string | null = null;
     if (vertexType === "Page") {
       previewRelType = "PagePreview";
     } else if (vertexType === "EmailTemplate") {
       previewRelType = "EmailTemplatePreview";
-    } else {
+    } else if (vertexType === "Component") {
       previewRelType = "ComponentPreview";
     }
+    // Function doesn't have preview files
 
-    const previewResult = await tx.run(
-      `
-        MATCH (v:${vertexType})
-        WHERE elementId(v) = $id
-        OPTIONAL MATCH (v)-[r:${previewRelType}]->(f:File)
-        WITH f, collect(DISTINCT elementId(f)) as nodeIds, collect(DISTINCT elementId(r)) as edgeIds
-        DETACH DELETE f
-        RETURN nodeIds as deletedNodeIds, edgeIds as deletedEdgeIds
-      `,
-      { id: vertexId },
-    );
+    if (previewRelType) {
+      const previewResult = await tx.run(
+        `
+          MATCH (v:${vertexType})
+          WHERE elementId(v) = $id
+          OPTIONAL MATCH (v)-[r:${previewRelType}]->(f:File)
+          WITH f, collect(DISTINCT elementId(f)) as nodeIds, collect(DISTINCT elementId(r)) as edgeIds
+          DETACH DELETE f
+          RETURN nodeIds as deletedNodeIds, edgeIds as deletedEdgeIds
+        `,
+        { id: vertexId },
+      );
 
-    if (previewResult.records.length > 0) {
-      const record = previewResult.records[0];
-      const fileIds = record.get("deletedNodeIds");
-      const edgeIds = record.get("deletedEdgeIds");
+      if (previewResult.records.length > 0) {
+        const record = previewResult.records[0];
+        const fileIds = record.get("deletedNodeIds");
+        const edgeIds = record.get("deletedEdgeIds");
 
-      if (fileIds && fileIds.length > 0) {
-        deletedVertexIds.push(...fileIds);
-        deletedVertexCount += fileIds.length;
-      }
-      if (edgeIds && edgeIds.length > 0) {
-        deletedEdgeIds.push(...edgeIds);
-        deletedEdgeCount += edgeIds.length;
+        if (fileIds && fileIds.length > 0) {
+          deletedVertexIds.push(...fileIds);
+          deletedVertexCount += fileIds.length;
+        }
+        if (edgeIds && edgeIds.length > 0) {
+          deletedEdgeIds.push(...edgeIds);
+          deletedEdgeCount += edgeIds.length;
+        }
       }
     }
 
@@ -262,9 +269,15 @@ export async function deleteVertex(
     } else if (vertexType === "EmailTemplate") {
       activityType = "email_template_delete";
       description = `Deleted email template: ${deletedVertex.P.name || deletedVertex.P.key}`;
-    } else {
+    } else if (vertexType === "Component") {
       activityType = "component_delete";
       description = `Deleted component: ${deletedVertex.P.key || vertexId}`;
+    } else if (vertexType === "Theme") {
+      activityType = "theme_delete";
+      description = `Deleted theme: ${deletedVertex.P.key || vertexId}`;
+    } else {
+      activityType = "function_delete";
+      description = `Deleted function: ${deletedVertex.P.key || vertexId}`;
     }
 
     await createActivityLog(

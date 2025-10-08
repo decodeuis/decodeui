@@ -1,4 +1,4 @@
-import { onCleanup, runWithOwner, getOwner } from "solid-js";
+import { onCleanup, runWithOwner, getOwner, createEffect, on, onMount } from "solid-js";
 import type { FunctionArgumentType } from "~/components/form/type/FieldSchemaType";
 
 import type { DynamicPropsType } from "~/components/form/dynamic_component/functions/DynamicPropsType";
@@ -12,6 +12,7 @@ export function useComponentLifecycle(options: {
   dynamicProps: () => DynamicPropsType;
   getFunctionArgumentWithValue: () => FunctionArgumentType;
   setMounted: (mounted: boolean) => void;
+  reMount?: boolean;
 }) {
   const owner = getOwner();
   // Initialize lifecycle functions
@@ -61,6 +62,36 @@ export function useComponentLifecycle(options: {
       console.error("Error in onCleanup:", error);
     }
   };
+
+  // Initialize lifecycle handlers
+  initializeBeforeMount();
+  onMount(() => {
+    setupMount();
+  });
+  onCleanup(() => {
+    setTimeout(setupCleanup);
+  });
+
+  // Initialize lifecycle handlers and rerun when dynamicProps changes
+  if (options.reMount) {
+  createEffect(
+    on(
+      options.dynamicProps,
+      () => {
+        // Initialize lifecycle handlers
+        initializeBeforeMount();
+        setupMount();
+
+        // Set up cleanup handler
+        onCleanup(() => {
+          setupCleanup();
+        });
+      },
+      { defer: true }
+    )
+  );
+  }
+
 
   return {
     initializeBeforeMount,

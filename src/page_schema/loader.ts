@@ -5,10 +5,11 @@ export interface WebsiteSchemas {
   components?: Record<string, ExportedSchema>;
   pages?: Record<string, ExportedSchema>;
   themes?: Record<string, ExportedSchema>;
+  functions?: Record<string, ExportedSchema>;
 }
 
 type AllWebsiteSchemas = Record<string, WebsiteSchemas>;
-type SchemaType = "components" | "pages" | "themes";
+type SchemaType = "components" | "pages" | "themes" | "functions";
 
 interface ParsedPath {
   websiteName: string;
@@ -25,7 +26,8 @@ function parseModulePath(path: string): ParsedPath | null {
   if (
     schemaType !== "components" &&
     schemaType !== "pages" &&
-    schemaType !== "themes"
+    schemaType !== "themes" &&
+    schemaType !== "functions"
   )
     return null;
 
@@ -46,7 +48,7 @@ function processSchemaFile(
     const schema = parseHjsonPreservingMultiline(content);
 
     // Handle both AllWebsiteSchemas and WebsiteSchemas types
-    if ("components" in schemas || "pages" in schemas || "themes" in schemas) {
+    if ("components" in schemas || "pages" in schemas || "themes" in schemas || "functions" in schemas) {
       // WebsiteSchemas
       const websiteSchemas = schemas as WebsiteSchemas;
       if (!websiteSchemas[parsedPath.schemaType]) {
@@ -98,7 +100,7 @@ export function getWebsiteSchemasSync(websiteName: string): WebsiteSchemas {
     return websiteSchemaCache.get(websiteName)!;
   }
 
-  const schemas: WebsiteSchemas = { components: {}, pages: {}, themes: {} };
+  const schemas: WebsiteSchemas = { components: {}, pages: {}, themes: {}, functions: {} };
 
   // We have to use the general pattern, but we'll filter efficiently
   // Use explicit default import for better compatibility

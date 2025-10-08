@@ -7,6 +7,7 @@ import type { Vertex } from "~/lib/graph/type/vertex";
 
 interface UserResult {
   // globalTheme: null | Vertex;
+  globalSetting: null | Vertex;
   profileImage: null | Vertex;
   roles: Vertex[];
   user: null | Vertex;
@@ -40,7 +41,8 @@ export async function findUserByEmailOrUuid(
     OPTIONAL MATCH (u)-[:UserSetting]->(s:UserSetting)
     OPTIONAL MATCH (u)-[:UserRole]->(r:Role)
     OPTIONAL MATCH (u)-[:UserProfileImage]->(p:File)
-    RETURN u, s, collect(r) AS roles, p
+    OPTIONAL MATCH (g:GlobalSetting)
+    RETURN u, s, collect(r) AS roles, p, g
   `;
 
   const result = await dbSession.run(query, { email, uuid });
@@ -61,12 +63,16 @@ export async function findUserByEmailOrUuid(
   const profileImage = record.get("p")
     ? convertNodeToJson(record.get("p") as Node)
     : null;
+  const globalSetting = record.get("g")
+    ? convertNodeToJson(record.get("g") as Node)
+    : null;
 
   if (user && !userSetting) {
     userSetting = (await createUserSetting(dbSession, user.P.uuid)) as Vertex;
   }
 
   return {
+    globalSetting,
     profileImage,
     roles,
     user,
@@ -98,7 +104,9 @@ export async function findUserByEmailSimple(
 
 async function getGuestOnlyResult(dbSession: Session): Promise<UserResult> {
   const guestRole = await getGuestRole(dbSession);
+  const globalSetting = await getGlobalSetting(dbSession);
   return {
+    globalSetting,
     profileImage: null,
     roles: [guestRole],
     user: null,
@@ -113,4 +121,24 @@ async function getGuestRole(dbSession: Session): Promise<Vertex> {
   `;
   const guestResult = await dbSession.run(guestQuery);
   return convertNodeToJson(guestResult.records[0].get("r") as Node);
+}
+
+async function getGlobalSetting(dbSession: Session): Promise<Vertex | null> {
+  try {
+    const query = `
+      MATCH (g:GlobalSetting)
+      RETURN g
+      LIMIT 1
+    `;
+    const result = await dbSession.run(query);
+
+    if (result.records.length === 0) {
+      return null;
+    }
+
+    return convertNodeToJson(result.records[0].get("g") as Node);
+  } catch (error) {
+    console.warn("Failed to fetch GlobalSetting:", error);
+    return null;
+  }
 }

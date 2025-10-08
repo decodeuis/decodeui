@@ -171,8 +171,8 @@ export function ContactForm() {
             },
           ),
         ],
-        componentName: "Data",
-        name: "submitState",
+        componentName: "Html",
+        contextName: "submitState",
         props: () => ({
           data: createStore<{ isLoading: boolean }>({
             isLoading: false,

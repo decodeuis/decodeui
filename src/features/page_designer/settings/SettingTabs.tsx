@@ -14,6 +14,7 @@ import { FormConfig } from "./form/FormConfig";
 import { NameKey } from "./keys/NameKey";
 import { UniqueConstrains } from "./keys/UniqueConstrain";
 import { LayoutTree } from "./layout/LayoutTree";
+import { LayoutTable } from "./layout/LayoutTable";
 import { Permission } from "./permission/Permission";
 import { Variants } from "./variants/Variants";
 import { As } from "~/components/As";
@@ -76,6 +77,8 @@ export function SettingTabs() {
                   <UniqueConstrains />
                 </Show>
 
+
+
                 <Show
                   when={isPermissionsConfigurable(
                     graph,
@@ -85,7 +88,15 @@ export function SettingTabs() {
                   <Divider />
                   <Permission />
                 </Show>
-
+                <Show
+                  when={
+                    graph.vertexes[formStoreVertex()?.P.formDataId]?.L?.[0] ===
+                    "Page"
+                  }
+                >
+                  <Divider />
+                  <LayoutTable />
+                </Show>
                 <Show
                   when={
                     graph.vertexes[formStoreVertex()?.P.formDataId]?.L?.[0] ===

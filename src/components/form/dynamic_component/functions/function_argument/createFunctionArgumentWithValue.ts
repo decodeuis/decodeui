@@ -9,19 +9,15 @@ export function createFunctionArgumentWithValue(
   value: () => unknown,
 ): FunctionArgumentType {
   return untrack(() => {
-    const functionArgumentDescriptors = Object.getOwnPropertyDescriptors(
-      baseArgsFn(),
-    );
-    const valueDescriptor = {
-      value: {
-        get: () => value(),
-        enumerable: true,
-        configurable: true,
-      },
-    };
-    return Object.defineProperties(
-      {},
-      { ...functionArgumentDescriptors, ...valueDescriptor },
-    ) as FunctionArgumentType;
+    const baseArgs = baseArgsFn();
+
+    // Add value getter to the existing object
+    Object.defineProperty(baseArgs, "value", {
+      get: () => value(),
+      enumerable: true,
+      configurable: true,
+    });
+
+    return baseArgs as FunctionArgumentType;
   });
 }

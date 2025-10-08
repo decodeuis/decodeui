@@ -383,8 +383,8 @@ export const getThemeFormSchema = (
         componentName: "Html",
       },
     ],
-    componentName: "Data",
-    name: "modalState",
+    componentName: "Html",
+    contextName: "modalState",
 
     props: (options: FunctionArgumentType) => ({
       data: createStore({
@@ -399,8 +399,8 @@ export const getThemeFormSchema = (
     attributes: [
       {
         attributes: [schema],
-        componentName: "Data",
-        name: "editorState",
+        componentName: "Html",
+        contextName: "editorState",
 
         props: () => ({
           data: createSignal<Monaco.editor.IStandaloneCodeEditor>(),

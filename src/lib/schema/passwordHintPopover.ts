@@ -234,8 +234,8 @@ export function createPasswordLabelWithHint(label: string): FieldAttribute {
         componentName: "Html",
       },
     ],
-    componentName: "Data",
-    name: "helpIconState",
+    componentName: "Html",
+    contextName: "helpIconState",
 
     props: () => ({
       data: createStore<{
@@ -267,8 +267,8 @@ export function getPasswordLabelWithHintSchema(
     attributes: [
       {
         attributes: [popoverWrapperSchema(actionElement, popoverContent)],
-        componentName: "Data",
-        name: "validationState",
+        componentName: "Html",
+        contextName: "validationState",
 
         props: () => ({
           data: createStore<{

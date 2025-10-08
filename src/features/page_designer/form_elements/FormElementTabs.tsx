@@ -260,6 +260,7 @@ export function FormElementTabs() {
             <ComponentList
               edgeName="ParentComp"
               rootExpression={`g:'Comp[Root]'`}
+              hideActionButtons={true}
             />
 
             <Divider />

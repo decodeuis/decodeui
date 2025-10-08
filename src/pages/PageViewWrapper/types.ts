@@ -2,7 +2,7 @@ import type { Id } from "~/lib/graph/type/id";
 import type { ServerResult } from "~/cypher/types/ServerResult";
 
 export interface PageViewWrapperProps {
-  closePopUp?: () => void;
+  closePopUp?: (action?: string) => void;
   context?: Record<string, unknown>;
   dataId?: Id;
   dontConfirmExit?: boolean;

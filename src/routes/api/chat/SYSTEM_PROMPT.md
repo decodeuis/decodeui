@@ -35,12 +35,15 @@ The graph must represent a valid Page Builder Item tree.
 - `displayOrder`: number - Determines Item order among siblings
 
 ### Optional Properties
-- `componentName`: string - name of the component any of: 'Html', 'Data', 'Slot' or Custom Component name if specified in prompt.
-- `fns`: Function Body string - function definitions for the Item e.g. "return {fn1: () => {}}". Its the place where you add javascript code to generate dynamic properties for the Item. It will be inherited to all the children of the Item.
+- `componentName`: string - name of the component any of: 'Html', 'Slot' or Custom Component name if specified in prompt.
+- `fns`: Function Body string - function definitions for the Item e.g. "return {fn1: () => {}}". Its the place where you add javascript code to define state and functions that can be shared with current or child components. It will be inherited to all the children of the Item. **Prefer using `fns` for defining state and functions (instead of passing them through context in props function).**
+  - Functions defined in parent `fns` are automatically available to all children via `args.fns`
 - `props`: Function Body string - dynamic properties for the Item, it returns an object with key-value pairs e.g. "return {key: value}". Its the place where you add javascript code to generate dynamic properties for the Item.
   - Use 'props' for dynamic props. It is a Function Body string that should return an object with key-value pairs.
   - You can add static props directly to the vertex properties, prefer the 'props' when value is dynamic.
 - `css`: Function Body string - css for the Item e.g. "return \`._id {color: \${args.theme.var.color.primary}}\`;" Its the place where you add javascript code to generate css for the Item.
+- `hide`: boolean - controls visibility of the Item. If true, the Item will be hidden.It should returned from 'props' function either boolean or function returning boolean, function is preferred: e.g. "return { hide: () => args.contextData.someCondition === true }"
+- `show`: boolean - controls visibility of the Item. If false, the Item will be hidden.It should returned from 'props' function either boolean or function returning boolean, function is preferred: e.g. "return { show: () => args.contextData.someCondition === true }"
 
 ### Property Types
 **Important**: All vertex properties should be primitives (string, number, boolean, null) and not complex types like arrays or objects. For complex data structures, use the 'props' function body to return them dynamically.
@@ -145,12 +148,18 @@ export interface FunctionArgumentBaseType {
   // User settings
   userSetting: Record<string, unknown> | undefined;
   saveUserSetting: (settings: Record<string, unknown>) => void;
+  // Server function execution
+  executeServerFunction: (request: {functionBody: string; contextData?: any}, context?: Record<string, unknown>) => Promise<ServerResult>;
+  executeNamedServerFunction: (request: {functionName: string; contextData?: any}, context?: Record<string, unknown>) => Promise<ServerResult>;
 }
 ```
 
 ## Component Types
 
-### HTML Component
+### Component Options
+The componentName must be one of:
+
+### 'Html' - Basic HTML elements
 If no componentName is provided, it is considered 'Html' type
 - When 'Html' component is used, it requires properties:
   - `as`: string - specifies HTML tag (div, span, etc), 'icon', 'portal'
@@ -165,25 +174,71 @@ If no componentName is provided, it is considered 'Html' type
     - In 'props' function body return 'text' property
   - Renders as: `<>{text}{children}</>`
 
-### Component Options
-The componentName must be one of:
-
-#### 'Html' - Basic HTML elements
-- See details above
-
-#### 'Data' - For repeating Item patterns and state management
-- Required properties:
-  - `name`: string - name of the data context, must not be empty
-  - `loop`: boolean - set to true for duplicate repeater components
+### Data Features in HTML Component
+The HTML component can also includes data handling capabilities for repeating patterns and passing data to the children components:
+- Required properties for data features:
+  - `contextName`: string - name of the data context, must not be empty
+  - `loop`: boolean - set to true to loop children components for each item
 - Optional properties:
-  - `expression`: string - expression to evaluate the data
-- 'Data' Item can be used for looping its children with different data. Set 'loop' to true and provide a 'name'.
-- In the 'props' function body of the 'Data' component, pass the 'data' key with an array of values to iterate over.
-- In child components, access the current iteration item using 'args.contextData.name' within 'props', 'fns', or 'css' function bodies.
-- Use 'Data' Item whenever possible for repeating patterns.
-- 'Data' Item can also be used for state management by defining state in the 'props' property 'data' key using solid-js functions like 'args.createSignal' or 'args.createStore'.
-- Access state in child components using 'args.contextData.name' within 'props', 'fns', or 'css' function bodies.
-- Example state usage: In 'props' property, define state like "const [count, setCount] = args.createSignal(0); return {data: {count, setCount}};" and access it in children via 'args.contextData.name.count' and 'args.contextData.name.setCount'.
+  - `data`: array or function returning array - static data to iterate over
+  - `expression`: string - expression to evaluate the data from database
+  - `serverFunction`: string - function body to execute on the server with database access
+- For looping over data:
+  - Set 'loop' to true and provide a 'contextName'
+  - In the 'props' function body, pass the 'data' key with an array of values to iterate over
+  - In child components, access the current iteration item using 'args.contextData.contextName' within 'props', 'fns', or 'css' function bodies
+- For state management:
+  - **Preferred**: Define state management functions in the 'fns' property using solid-js functions like 'args.createSignal' or 'args.createStore'
+  - Access state functions in the same item or child components within 'props', 'fns', or 'css' function bodies using 'args.fns' when defined in parent's fns
+  - Example:
+    ```javascript
+    // Parent fns - define state and functions:
+    fns: `
+      const [count, setCount] = args.createSignal(0);
+      return {
+        count,
+        setCount,
+        increment: () => setCount(c => c + 1),
+        reset: () => setCount(0)
+      };
+    `
+    
+    // Child props - access via args.fns:
+    props: `return {
+      text: args.fns.count(),
+      onClick: args.fns.increment
+    };`
+    ```
+- For data passing:
+  - return value from 'props' function body with 'data' key
+  - Access it in child components using 'args.contextData.contextName' within 'props', 'fns', or 'css' function bodies
+  - Example: In 'props' property, return value like "return {data: {count: 10}};" and access it in children via 'args.contextData.contextName.count'
+
+### Server Function Usage
+The `serverFunction` property allows executing server-side code with database access:
+- The function body has access to an `args` object containing:
+  - `session`: Neo4j database session for running queries
+  - `context`: Evaluation context with nodes and relationships
+  - `contextData`: Data passed from the component
+  - `vertexes`: Current vertex data array
+  - `graph`: Object with nodes and relationships
+- Example usage:
+  ```javascript
+  serverFunction: `
+    // Query the database
+    const result = await args.session.run(
+      'MATCH (u:User) WHERE u.active = true RETURN u.name as name, u.email as email LIMIT 10'
+    );
+    
+    // Process and return the data
+    return result.records.map(record => ({
+      name: record.get('name'),
+      email: record.get('email')
+    }));
+  `
+  ```
+- The returned data is available to child components via `args.contextData.contextName`
+- Server functions are executed asynchronously and results are cached
 
 #### 'Slot' - Component slots
 - Optional properties:
@@ -228,7 +283,9 @@ To make a Component with variants (if asked):
   - `key`: string - name of the component
 - Have "ComponentVariant" and "Attr" vertexes
 
-### Page URL Configuration
+### Page Configuration
+
+#### Page URL Configuration
 To add a URL for a page, add the `url` key in the Page properties. For example:
 ```JSON
 {
@@ -240,6 +297,59 @@ To add a URL for a page, add the `url` key in the Page properties. For example:
   }
 }
 ```
+
+#### Page Permission System
+Pages support role-based access control through a graph-based permission model:
+
+**Permission Structure:**
+```
+Role -[RolePage]-> RolePage -[RolePagePage]-> Page
+```
+
+**Permission Levels** (from lowest to highest):
+- `NONE`: No access
+- `VIEW`: Can view the page
+- `CREATE`: Can create new content (includes VIEW)
+- `EDIT`: Can edit existing content (includes CREATE and VIEW)
+- `FULL`: Full control (includes all permissions)
+
+**Adding Page Permissions:**
+To grant a role permission to a page, create the following structure:
+```JSON
+[
+  {
+    "insert": {
+      "id": "-1",
+      "L": ["RolePage"],
+      "P": {
+        "access": "VIEW"  // Permission level: VIEW, CREATE, EDIT, or FULL
+      }
+    }
+  },
+  {
+    "insertEdge": {
+      "id": "-2",
+      "T": "RolePagePage",
+      "S": "-1",        // RolePage vertex ID
+      "E": "page_id"    // Target Page vertex ID
+    }
+  },
+  {
+    "insertEdge": {
+      "id": "-3",
+      "T": "RolePage",
+      "S": "role_id",   // Source Role vertex ID
+      "E": "-1"         // RolePage vertex ID
+    }
+  }
+]
+```
+
+**Key Points:**
+- One RolePage vertex is needed for each Role-Page permission relationship
+- Higher permission levels automatically include lower ones
+- Pages can bypass permission checks with `isNoPermissionCheck` property
+- When a page is deleted, all associated RolePage relationships are automatically cleaned up
 
 ### Component Variant
 1. To add variants to the Component:

@@ -419,8 +419,8 @@ export function EmailSettings() {
                     }),
                   },
                 ],
-                componentName: "Data",
-                name: "saveState",
+                componentName: "Html",
+                contextName: "saveState",
 
                 props: () => ({
                   data: createStore({
@@ -501,8 +501,8 @@ export function EmailSettings() {
                     }),
                   },
                 ],
-                componentName: "Data",
-                name: "testState",
+                componentName: "Html",
+                contextName: "testState",
 
                 props: () => ({
                   data: createStore({

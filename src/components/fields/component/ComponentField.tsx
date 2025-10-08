@@ -1,7 +1,7 @@
-import { createMemo, Show, splitProps } from "solid-js";
+import { createMemo, Show, splitProps, useContext, Switch, Match } from "solid-js";
 import { createAsync } from "@solidjs/router";
 
-import { SlotContext } from "~/components/fields/component/contexts/SlotContext";
+import { SlotContext, SlotContextType } from "~/components/fields/component/contexts/SlotContext";
 import { fetchComponentData } from "~/cypher/get/fetchComponentData";
 import { usePageRenderContext } from "~/features/page_attr_render/context/PageRenderContext";
 import { PageAttrRender } from "~/features/page_attr_render/PageAttrRender";
@@ -161,30 +161,61 @@ export function ComponentField(props: Readonly<{ children?: JSX.Element }>) {
     );
   };
 
-  const Children = (props: { slot: string }) => {
+  const Children = (props: { slot: string, class?: string }) => {
+    const currentSlotComponents = useContext(SlotContext) || [];
+
     const slotFilter = (vertex: Vertex) => {
       if (props.slot) {
         return vertex.P.slot === props.slot;
       }
       return !vertex.P.slot;
     };
+
+    // Check if slot name includes level indicator (e.g., "1footer")
+    const hierarchicalMatch = () => props.slot?.match(/^(\d+)(.+)$/);
+
     return (
-      <PreviewContext.Provider value={[previewStoreProxy, setPreviewStore]}>
-        <Show when={meta()}>
-          <PageAttrRender
-            data={data()}
-            isNoPermissionCheck={
-              parentRenderContext()?.context.isNoPermissionCheck
-            }
-            metaVertex={meta() as Vertex}
-            filter={slotFilter}
-          />
-        </Show>
-      </PreviewContext.Provider>
+      <Switch>
+        <Match when={hierarchicalMatch()}>
+          {(match) => {
+            const [, levelStr, slotName] = match();
+            const level = parseInt(levelStr, 10);
+
+            // Use the parent slot component at the specified level
+            const SlotComponentParent = level > 0 && level <= currentSlotComponents.length
+              ? currentSlotComponents[currentSlotComponents.length - level - 1]
+              : null as unknown as SlotContextType;
+
+            return (
+              <Show when={SlotComponentParent}>
+                <SlotComponentParent slot={slotName} />
+              </Show>
+            );
+          }}
+        </Match>
+        <Match when={true}>
+          <PreviewContext.Provider value={[previewStoreProxy, setPreviewStore]}>
+            <Show when={meta()}>
+              <PageAttrRender
+                data={data()}
+                isNoPermissionCheck={
+                  parentRenderContext()?.context.isNoPermissionCheck
+                }
+                metaVertex={meta() as Vertex}
+                filter={slotFilter}
+                class={props.class}
+              />
+            </Show>
+          </PreviewContext.Provider>
+        </Match>
+      </Switch>
     );
   };
 
   const Content = () => {
+    // Get parent children components from SlotContext
+    const parentSlotComponents = useContext(SlotContext) || [];
+
     if (componentData()?.graph) {
       setGraphData(graph, setGraph, componentData()!.graph!, {
         skipExisting: true,
@@ -201,7 +232,7 @@ export function ComponentField(props: Readonly<{ children?: JSX.Element }>) {
           </div>
         }
       >
-        <SlotContext.Provider value={Children}>
+        <SlotContext.Provider value={[...parentSlotComponents, Children]}>
           <ComponentWrapper />
         </SlotContext.Provider>
       </Show>

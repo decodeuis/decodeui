@@ -106,8 +106,8 @@ export function PasswordChangeForm() {
                 }),
               },
             ],
-            componentName: "Data",
-            name: "saveState",
+            componentName: "Html",
+            contextName: "saveState",
 
             props: () => ({
               data: createStore<SaveState>({

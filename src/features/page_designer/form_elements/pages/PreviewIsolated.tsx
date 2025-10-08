@@ -6,9 +6,7 @@ import { getChannel } from "~/lib/graph/mutate/core/channel/getChannel";
 import { useDesignerLayoutStore } from "../../context/LayoutContext";
 import { useGraph } from "~/lib/graph/context/UseGraph";
 
-export function PreviewIsolated(props: {
-  item: Vertex;
-}) {
+export function PreviewIsolated(props: { item: Vertex }) {
   const [graph, setGraph] = useGraph();
   const channelId = `preview-isolated-${props.item.id}`;
   const layoutStoreId = useDesignerLayoutStore();

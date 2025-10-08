@@ -16,6 +16,7 @@ export function PageAttrRender(
     filter?: (vertex: Vertex) => boolean;
     isNoPermissionCheck: boolean;
     metaVertex: Vertex;
+    class?: string;
   }>,
 ) {
   const [graph, setGraph] = useGraph();
@@ -38,6 +39,7 @@ export function PageAttrRender(
           // onChange={props.onChange}
           meta={item}
           txnId={formVertex()?.P.txnId}
+          class={props.class}
         />
       )}
     </For>

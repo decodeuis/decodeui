@@ -537,8 +537,8 @@ export function ForgotPasswordForm() {
                 }),
               },
             ],
-            componentName: "Data",
-            name: "stageData",
+            componentName: "Html",
+            contextName: "stageData",
 
             props: () => ({
               data: createStore({
@@ -547,8 +547,8 @@ export function ForgotPasswordForm() {
             }),
           },
         ],
-        componentName: "Data",
-        name: "submitState",
+        componentName: "Html",
+        contextName: "submitState",
 
         props: () => ({
           data: createStore({

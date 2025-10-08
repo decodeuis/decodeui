@@ -184,9 +184,9 @@ export function SettingsLayout(props: SettingsLayoutProps) {
                                 ],
                               },
                             ],
-                            componentName: "Data",
+                            componentName: "Html",
                             loop: true,
-                            name: "menuItems",
+                            contextName: "menuItems",
                             props: (args: FunctionArgumentType) => ({
                               data: (
                                 args.contextData.menuGroups as DataType
@@ -208,8 +208,8 @@ export function SettingsLayout(props: SettingsLayoutProps) {
                         }),
                       },
                     ],
-                    componentName: "Data",
-                    name: "menuGroups",
+                    componentName: "Html",
+                    contextName: "menuGroups",
                     props: () => ({
                       data: Object.entries(groupedMenuItems()),
                       loop: true,

@@ -1,7 +1,6 @@
 import { defineConfig } from "@solidjs/start/config";
 // import devtools from 'solid-devtools/vite';
 
-
 export default defineConfig({
   middleware: "./src/middleware.ts",
   // server: {
@@ -11,15 +10,14 @@ export default defineConfig({
     server: {
       //  If set to true, the server is allowed to respond to requests for any hosts.
       allowedHosts: true,
-      
     },
     build: {
       rollupOptions: {
-        external: ['node:async_hooks'] // Mark node:async_hooks as external to prevent browser compatibility issues
-      }
+        external: ["node:async_hooks"], // Mark node:async_hooks as external to prevent browser compatibility issues
+      },
     },
     optimizeDeps: {
-      exclude: ['node:async_hooks'] // Exclude node:async_hooks from optimization to fix build error
+      exclude: ["node:async_hooks"], // Exclude node:async_hooks from optimization to fix build error
     },
     // dev: {
     //   force: false,
@@ -32,15 +30,15 @@ export default defineConfig({
     // },
     // },
     // server: {
-      // https: {
-        // cert: "/etc/letsencrypt/live/decodeui.io/fullchain.pem",
-        // key: "/etc/letsencrypt/live/decodeui.io/privkey.pem",
-      // },
-      // port: 36075, // Change this to the desired port number for the server
-      // hmr: {
-      //   protocol: "wss",
-      //   port: 2900, // Change this to the desired port number for HMR
-      // },
+    // https: {
+    // cert: "/etc/letsencrypt/live/decodeui.io/fullchain.pem",
+    // key: "/etc/letsencrypt/live/decodeui.io/privkey.pem",
+    // },
+    // port: 36075, // Change this to the desired port number for the server
+    // hmr: {
+    //   protocol: "wss",
+    //   port: 2900, // Change this to the desired port number for HMR
+    // },
     // },
     plugins: [
       // monaco-editor gives error in devtools

@@ -11,7 +11,7 @@ export function formCancel(
   formStoreVertex: () => Vertex<FormStoreObject>,
   graph: GraphInterface,
   setGraph: SetStoreFunction<GraphInterface>,
-  closePopUp: () => void,
+  closePopUp: (action?: string) => void,
   navigate: (path: string) => void,
 ) {
   const navigateToParentRoute = () => {

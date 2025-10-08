@@ -1,6 +1,6 @@
 // ADD a Feature:
 // When nested PageViewWrapper is used, children should get parent context too.
-import { batch, createMemo, Match, Show, Switch, untrack } from "solid-js";
+import { batch, createMemo, createEffect, on, Match, Show, Switch, untrack } from "solid-js";
 
 import { FormContext } from "~/components/form/context/FormContext";
 import { DialogWithButtons } from "~/components/styled/modal/DeleteDialog";
@@ -11,6 +11,17 @@ import { generateNewTxnId } from "~/lib/graph/transaction/core/generateNewTxnId"
 import { revertTransaction } from "~/lib/graph/transaction/revert/revertTransaction";
 import { useGraph } from "~/lib/graph/context/UseGraph";
 import { NotFound } from "~/components/404";
+import { createDynamicPropsMemo } from "~/components/form/dynamic_component/functions/createDynamicPropsMemo";
+import { createFunctionArgumentBase } from "~/components/form/dynamic_component/functions/function_argument/createFunctionArgumentBase";
+import { createFunctionArgumentWithValue } from "~/components/form/dynamic_component/functions/function_argument/createFunctionArgumentWithValue";
+import { useToast } from "~/components/styled/modal/Toast";
+import { useSearchParams, useLocation, useNavigate } from "@solidjs/router";
+import { useTheme } from "~/lib/theme/ThemeContext";
+import { useThemeToggle } from "~/lib/hooks/useThemeToggle";
+import { useZIndex } from "~/components/fields/ZIndex";
+import { getOwner, createSignal } from "solid-js";
+import { usePageRenderContext } from "~/features/page_attr_render/context/PageRenderContext";
+import { getLastItem } from "~/lib/data_structure/array/getLastItem";
 
 import type {
   PageViewWrapperProps,
@@ -25,6 +36,9 @@ import type {
   FetchFormDataResult,
   FetchFormMetaDataResult,
 } from "~/pages/functions/fetchPageData";
+import type { FunctionArgumentType } from "~/components/form/type/FieldSchemaType";
+import {SaveCancelButton} from "~/components/form/SaveCancelButton";
+import {isDisabledTxn} from "~/lib/graph/transaction/value/isDisabledTxn";
 
 export function PageViewWrapper(props: Readonly<PageViewWrapperProps>) {
   const [graph, setGraph] = useGraph();
@@ -48,8 +62,93 @@ export function PageViewWrapper(props: Readonly<PageViewWrapperProps>) {
 
   const [previewStore] = usePreviewContext();
 
+  // Context hooks needed for function arguments
+  const toast = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const zIndex = useZIndex();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const theme = useTheme();
+  const themeToggle = useThemeToggle();
+  const owner = getOwner();
+  const parentItems = usePageRenderContext();
+  const [ref, setRef] = createSignal<HTMLElement | null>(null);
+  const [mounted, setMounted] = createSignal<null | boolean>(null);
+  const [componentName] = createSignal<string>("Html");
+
+  const parentRenderContext = () =>
+    getLastItem(parentItems)?.[0] as
+      | { context: FunctionArgumentType }
+      | undefined;
+  const parentMeta = () => parentRenderContext()?.context.meta;
+
+  // Create a proper function argument for evaluating dynamic props
+  const getFunctionArgument = () => {
+    const meta = metaVertex();
+    if (!meta) return {} as FunctionArgumentType;
+
+    return createFunctionArgumentBase(
+      {
+        data: dataVertex(),
+        meta,
+      },
+      {
+        formVertex: () => formStore() as any,
+        formId: formStore().id,
+        componentName,
+        isNoPermissionCheck: () => props.isNoPermissionCheck || false,
+        isViewMode: () => false,
+        mounted,
+        parentMeta,
+        ref,
+        setRef,
+        updateValue: () => {},
+        onChange: () => {},
+        hasFullPermission: () => true,
+        hasEditPermission: () => true,
+        hasCreatePermission: () => true,
+        hasViewPermission: () => true,
+      },
+      {
+        graph,
+        setGraph,
+        toast,
+        searchParams,
+        setSearchParams,
+        zIndex,
+        navigate,
+        location,
+        theme,
+        parentItems,
+        previewStore,
+        themeToggle,
+        owner: owner!,
+        parentRenderContext,
+        functionProxy: {},
+      },
+    );
+  };
+
+  const getFunctionArgumentWithValue = () =>
+    createFunctionArgumentWithValue(getFunctionArgument, ()=> undefined);
+
+  // Evaluate dynamic props from metaVertex
+  const dynamicProps = (() => { // cant use createMemo, as it is giving error: tempate is not defined during ssr. must fix letter
+    const meta = metaVertex();
+    if (!meta) return {};
+
+    return createDynamicPropsMemo(
+      { meta },
+      {
+        graph,
+        getFunctionArgumentWithValue,
+      },
+    )();
+  });
+
   const isNoPermissionCheck = () =>
     props.isNoPermissionCheck ||
+    dynamicProps().isNoPermissionCheck ||
     metaVertex()?.P.isNoPermissionCheck ||
     previewStore.isNoPermissionCheck;
 
@@ -62,19 +161,19 @@ export function PageViewWrapper(props: Readonly<PageViewWrapperProps>) {
     previewStore,
   });
 
-  const constants: PageViewConstants = {
-    dataId: props.dataId,
-    expression: props.expression,
-    formDataId: props.formDataId,
-    formId: props.formId,
-    formMetaId: props.formMetaId,
-    getFormData: !!props.getFormData,
-    isDesignMode: props.isDesignMode,
-    isNoPermissionCheck: props.isNoPermissionCheck,
-    pageKeyName: props.pageKeyName,
-    pageVertexName: props.pageVertexName,
-    url: props.url,
-  };
+  const constants = (): PageViewConstants => ({
+    get dataId() { return props.dataId; },
+    get expression() { return props.expression; },
+    get formDataId() { return props.formDataId; },
+    get formId() { return props.formId; },
+    get formMetaId() { return untrack(()=>props.formMetaId) },
+    get getFormData() { return !!props.getFormData; },
+    get isDesignMode() { return props.isDesignMode; },
+    get isNoPermissionCheck() { return props.isNoPermissionCheck; },
+    get pageKeyName() { return props.pageKeyName; },
+    get pageVertexName() { return props.pageVertexName; },
+    get url() { return props.url; },
+  });
 
   // Initialize metadata handling
   const { metaData, setFormMetaData } = useMetadata(props, {
@@ -110,12 +209,18 @@ export function PageViewWrapper(props: Readonly<PageViewWrapperProps>) {
     if (
       formStore().P.formMetaId &&
       !isNoPermissionCheck() &&
-      ["Page"].includes(metaVertex()?.L[0]) &&
-      !getDynamicFns().enabled?.()
+      ["Page"].includes(metaVertex()?.L[0])
     ) {
-      const errorMsg = `${props.pageVertexName} is not enabled. Please contact your administrator.`;
-      setFormStore("error", errorMsg);
-      return errorMsg;
+      const dynamicFns = getDynamicFns();
+      const enabled = typeof dynamicFns.enabled === 'function'
+        ? dynamicFns.enabled()
+        : dynamicFns.enabled;
+
+      if (!enabled) {
+        const errorMsg = `${props.pageVertexName} is not enabled. Please contact your administrator.`;
+        setFormStore("error", errorMsg);
+        return errorMsg;
+      }
     }
 
     if (!metaVertex()) {
@@ -148,18 +253,17 @@ export function PageViewWrapper(props: Readonly<PageViewWrapperProps>) {
     error?: string;
   }) => {
     if (result) {
-      untrack(() => {
-        batch(() => {
-          if (result.error) {
-            setFormStore("error", result.error);
-          } else {
-            setFormMetaData(result?.metaResult, result?.formMetaId);
-            const validationError = validateMetaVertex();
-            if (!validationError) {
-              handleFormData(result?.dataResult);
-            }
+      batch(() => {
+        setFormStore("error", "");
+        if (result.error) {
+          setFormStore("error", result.error);
+        } else {
+          setFormMetaData(result?.metaResult, result?.formMetaId);
+          const validationError = validateMetaVertex();
+          if (!validationError) {
+            handleFormData(result?.dataResult);
           }
-        });
+        }
       });
     }
   };
@@ -180,7 +284,18 @@ export function PageViewWrapper(props: Readonly<PageViewWrapperProps>) {
 
   const ContentSSR = () => {
     processResult(metaData());
-
+    createEffect(
+      on(
+        metaData,
+        () => {
+          const result = metaData();
+          if (result) {
+            processResult(result);
+          }
+        },
+        { defer: true }
+      )
+    );
     return (
       <>
         <Show when={formStore().P.error === "404"}>
@@ -224,12 +339,12 @@ export function PageViewWrapper(props: Readonly<PageViewWrapperProps>) {
                 }
               >
                 <Content />
-                {/* <Show when={isNoPermissionCheck() && !props.hideSaveCancelButton}>
+                <Show when={isNoPermissionCheck() && !(props.hideSaveCancelButton ?? true)}>
                 <SaveCancelButton
                   closePopUp={props.closePopUp}
                   disabled={isDisabledTxn(formStore().P.txnId, graph)}
                 />
-              </Show> */}
+              </Show>
               </Match>
             </Switch>
           </FormContext.Provider>
@@ -264,3 +379,4 @@ export function PageViewWrapper(props: Readonly<PageViewWrapperProps>) {
     </Show>
   );
 }
+

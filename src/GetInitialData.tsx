@@ -15,6 +15,7 @@ import { mergeVertexProperties } from "~/lib/graph/mutate/core/vertex/mergeVerte
 import type { GlobalProperties } from "~/lib/graph/context/GlobalProperties";
 import { useGraph } from "~/lib/graph/context/UseGraph";
 import { SimpleErrorMessage } from "~/components/SimpleErrorMessage";
+import { loadWebsiteSchemasForSubdomain } from "~/createAppState";
 
 interface GetInitialDataProps extends ParentProps {
   dontRedirectToLogin?: boolean;

@@ -315,8 +315,8 @@ export function AccountDeletionForm() {
   // Main form schema with state management
   const formSchema: FieldAttribute = {
     attributes: [deleteAccountSchema],
-    componentName: "Data",
-    name: "deleteState",
+    componentName: "Html",
+    contextName: "deleteState",
 
     props: (options: FunctionArgumentType) => ({
       data: createStore<DeleteState>({

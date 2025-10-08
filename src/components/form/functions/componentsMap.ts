@@ -1,7 +1,6 @@
 import { Transition, TransitionGroup } from "solid-transition-group";
 import { SlotField } from "~/components/fields/component/SlotField";
 import { ComponentField } from "~/components/fields/component/ComponentField";
-import { DataField } from "~/components/fields/data/DataField";
 import { SelectField } from "~/components/fields/select/SelectField";
 import { TableInputField } from "~/components/fields/table_field/TableInputField";
 import { ZIndex } from "~/components/fields/ZIndex";
@@ -13,7 +12,6 @@ export const componentsMap: Record<string, any> = {
   // Button: ButtonField,
   Component: ComponentField,
   Slot: SlotField,
-  Data: DataField,
   // https://ark-ui.com/solid/docs/components/color-picker
   DynamicTable: TableInputField,
   FileUploader: FileUploader,

@@ -183,9 +183,9 @@ export const getSupportTicketFormSchema = (onSuccess: () => void) => {
                         componentName: "Html",
                       },
                     ],
-                    componentName: "Data",
+                    componentName: "Html",
                     loop: true,
-                    name: "history",
+                    contextName: "history",
                     props: (options: FunctionArgumentType) => ({
                       data: () =>
                         evalExpression("<-ParentSupport", {
@@ -357,8 +357,8 @@ export const getSupportTicketFormSchema = (onSuccess: () => void) => {
         componentName: "Html",
       },
     ],
-    componentName: "Data",
-    name: "replyState",
+    componentName: "Html",
+    contextName: "replyState",
 
     props: () => ({
       data: createStore({
@@ -618,8 +618,8 @@ export const getSupportTicketFormSchema = (onSuccess: () => void) => {
         componentName: "Html",
       },
     ],
-    componentName: "Data",
-    name: "modalState",
+    componentName: "Html",
+    contextName: "modalState",
 
     props: () => ({
       data: createStore({

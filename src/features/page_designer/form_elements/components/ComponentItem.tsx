@@ -33,6 +33,7 @@ export function ComponentItem(
     previewPageId: Id | null;
     setPreviewPageId: (id: Id | null) => void;
     toggleExpand: (itemId: Id) => void;
+    hideActionButtons?: boolean;
   }>,
 ) {
   const [graph, setGraph] = useGraph();
@@ -181,7 +182,7 @@ export function ComponentItem(
           {getDisplayName()}
         </As>
 
-        <Show when={shouldShowButtons()}>
+        <Show when={shouldShowButtons() && !props.hideActionButtons}>
           <As
             as="div"
             css={`return \`._id {margin-left: auto; display: flex;}\`;`}
@@ -226,6 +227,7 @@ export function ComponentItem(
                 previewPageId={props.previewPageId}
                 setPreviewPageId={props.setPreviewPageId}
                 toggleExpand={props.toggleExpand}
+                hideActionButtons={props.hideActionButtons}
               />
             )}
           </For>

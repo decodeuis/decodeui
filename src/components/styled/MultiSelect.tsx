@@ -64,16 +64,16 @@ const getOptionValue = (option: Option, optionValueKey?: string): unknown => {
   return (option as { id: string }).id;
 };
 
-const getOptionLabel = (option: Option, displayValueKey?: string): string => {
+export const getOptionLabel = (option: Option, displayValueKey?: string): unknown => {
   if (isObject(option) && displayValueKey) {
     if (displayValueKey.includes("::")) {
-      return String(evalExpression(displayValueKey, option) || "");
+      return evalExpression(displayValueKey, option) || "";
     }
-    return String(option[displayValueKey as keyof Option] || "");
+    return option[displayValueKey as keyof Option] || "";
   }
   return isObject(option)
-    ? String((option as { label?: string }).label || "")
-    : String(option);
+    ? (option as { label?: string }).label || ""
+    : option;
 };
 
 function SelectedTag(props: {
@@ -325,8 +325,8 @@ const filterOptions = (
     if (!isObject(option)) {
       return String(option).toLowerCase().includes(inputValue.toLowerCase());
     }
-    const label = getOptionLabel(option, displayValueKey)?.toLowerCase();
-    const matches = Boolean(label?.includes(inputValue.toLowerCase()));
+    const label = String(getOptionLabel(option, displayValueKey)).toLowerCase();
+    const matches = label.includes(inputValue.toLowerCase());
 
     const optionRecord = option as Record<string, unknown>;
     if (

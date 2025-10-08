@@ -188,6 +188,20 @@ export const Page: IFormMetaData = {
           type: "Attr",
         },
         {
+          attributes: [
+            {
+              collection: "g:'Component'",
+              componentName: "Select",
+              key: "componentName",
+              labelKey: "::'P.key'",
+              valueKey: "::'P.key'",
+              saveValue: true
+            }],
+          componentName: "DynamicTable",
+          hide: true,
+          key: "Layout",
+        },
+        {
           ...parentComponentAttribute,
           hide: true,
           hideInGrid: true,

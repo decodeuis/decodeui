@@ -302,8 +302,8 @@ export function SignupForm() {
                 type: "button",
               },
             ],
-            componentName: "Data",
-            name: "submitState",
+            componentName: "Html",
+            contextName: "submitState",
 
             props: () => ({
               data: createStore<{ isLoading: boolean }>({

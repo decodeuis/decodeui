@@ -1,7 +1,7 @@
 import type { ColumnDef } from "@tanstack/solid-table";
 import type { SetStoreFunction, Store } from "solid-js/store";
 
-import { Match, Show, Switch } from "solid-js";
+import { Match, Show, Switch, createSignal } from "solid-js";
 
 import type {
   FieldAttribute,
@@ -14,8 +14,8 @@ import { getTagValue } from "~/features/grid/functions/getTagValue";
 import { PageDesignerLabels } from "~/features/page_designer/constants/PageDesignerLabels";
 import { capitalizeFirstLetter } from "~/lib/data_structure/string/capitalizeFirstLetter";
 import { FormMetaData } from "~/lib/meta/formMetaData";
-import { SchemaRenderer } from "~/pages/SchemaRenderer";
 import { STYLES } from "~/pages/settings/constants";
+import { SchemaRenderer } from "~/pages/SchemaRenderer";
 
 import type { DataGridState } from "../context/DataGridContext";
 
@@ -27,6 +27,11 @@ import { As } from "~/components/As";
 import type { Id } from "~/lib/graph/type/id";
 import type { Vertex } from "~/lib/graph/type/vertex";
 import type { GraphInterface } from "~/lib/graph/context/GraphInterface";
+import { CustomModal } from "~/components/styled/modal/CustomModal";
+import { PageViewWrapper } from "~/pages/PageViewWrapper";
+import { useGraph } from "~/lib/graph/context/UseGraph";
+import { revertTransaction } from "~/lib/graph/transaction/revert/revertTransaction";
+import type { FormStoreObject } from "~/components/form/context/FormContext";
 
 function ImageWrapper(props: { alt?: string; css?: string; src: string }) {
   return (
@@ -337,13 +342,30 @@ export function CreateGridHeaders(
               }
             >
               <Switch>
-                <Match when={formNew.isInlineEditable && !gridState.editSchema}>
-                  No Schema Found
-                </Match>
-                <Match when={formNew.isInlineEditable}>
+                {/*<Match when={formNew.isInlineEditable && !gridState.editSchema}>*/}
+                {/*  No Schema Found*/}
+                {/*</Match>*/}
+                <Match when={formNew.isInlineEditable && gridState.editSchema}>
                   <SchemaRenderer
                     form={gridState.editSchema!}
                     formDataId={info.row.original.id}
+                    hideSaveCancelButton={gridState.formMetaData().hideSaveCancelButton}
+                  />
+                </Match>
+                <Match when={formNew.isInlineEditable}>
+                  <InlineEditButton
+                    tableId={tableId}
+                    dataId={info.row.original.id}
+                    disabled={
+                      !gridState.isNoPermissionCheck &&
+                      !!gridState.formMetaData() &&
+                      !(
+                        gridState.hasEditPermission() ||
+                        gridState.hasViewPermission()
+                      )
+                    }
+                    fetchTableData={gridState.fetchTableData}
+                    hideSaveCancelButton={gridState.formMetaData().hideSaveCancelButton} // todo fix this
                   />
                 </Match>
                 <Match when={true}>
@@ -454,4 +476,93 @@ export function CreateGridHeaders(
     });
   }
   return tableColumns;
+}
+
+function InlineEditButton(props: {
+  tableId: string;
+  dataId: Id;
+  disabled: boolean;
+  fetchTableData: () => void;
+  hideSaveCancelButton?: boolean;
+}) {
+  const [showEditModal, setShowEditModal] = createSignal(false);
+  const [graph, setGraph] = useGraph();
+  let formStoreId: string | undefined;
+
+  const handleClose = (action?: string) => {
+    // Find the form store vertex and revert its transaction
+    if (formStoreId && graph.vertexes[formStoreId]) {
+      const formStore = graph.vertexes[formStoreId] as Vertex<FormStoreObject>;
+      if (formStore?.P?.txnId) {
+        revertTransaction(formStore.P.txnId, graph, setGraph);
+      }
+    }
+    setShowEditModal(false);
+    if (action === "Submit") {
+      props.fetchTableData();
+    }
+  };
+
+  return (
+    <>
+      <IconButton
+        disabled={props.disabled}
+        icon="ph:pen"
+        css={`return \`._id {
+          color: \${args.theme.var.color.primary};
+          background-color: transparent;
+          border: none;
+          padding: 1px;
+          cursor: pointer;
+          &:hover {
+            color: \${args.theme.var.color.primary_dark_400};
+          }
+          &:disabled {
+            color: \${args.theme.var.color.text_light_600};
+            cursor: not-allowed;
+          }
+        }\`;`}
+        onClick={() => setShowEditModal(true)}
+        size={21}
+      />
+      <Show when={showEditModal()}>
+        <CustomModal
+          open={() => showEditModal()}
+          setOpen={(open) => {
+            if (!open) handleClose();
+            else setShowEditModal(true);
+          }}
+          title={`Edit ${props.tableId}`}
+          containerCss={`return \`._id {
+            width: 80%; 
+            max-width: 1200px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+          }\`;`}
+          dialogCss={`return \`._id {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+          }\`;`}
+          bodyCss={`return \`._id {
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+          }\`;`}
+        >
+          <PageViewWrapper
+            dataId={props.dataId}
+            pageVertexName={props.tableId}
+            isNoPermissionCheck={true}
+            initializeFormStoreParent={(id) => { formStoreId = id; }}
+            hideSaveCancelButton={props.hideSaveCancelButton}
+            closePopUp={handleClose}
+          />
+        </CustomModal>
+      </Show>
+    </>
+  );
 }

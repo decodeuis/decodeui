@@ -20,7 +20,7 @@ export default function PageHandler() {
   });
 
   return (
-    <Show when={pagePath()} keyed>
+    <Show when={pagePath()}>
       <PageViewWrapper
         formMetaId={pageVertex()?.id}
         pageVertexName={"Page"}

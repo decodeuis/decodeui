@@ -2,7 +2,7 @@ import type { Setter } from "solid-js";
 
 import { PageViewWrapper } from "~/pages/PageViewWrapper";
 
-import { CustomModal } from "../../../components/styled/modal/CustomModal";
+import { CustomModal } from "~/components/styled/modal/CustomModal";
 
 // Deprecated
 export const QuickEditModal = (p: {

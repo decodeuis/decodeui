@@ -84,6 +84,7 @@ export function createVertexIds() {
     name: `nameInputVertex${createUniqueId()}`,
     loop: `loopCheckboxVertex${createUniqueId()}`,
     expression: `expressionInputVertex${createUniqueId()}`,
+    textType: `textTypeVertex${createUniqueId()}`,
   };
 }
 
@@ -376,6 +377,19 @@ function createVertices(
         key: "expression",
       },
     },
+    {
+      id: vertexIds.textType,
+      P: {
+        componentName: "Select",
+        displayName: "Text Type",
+        key: "textType",
+        options: [
+          { id: "", label: "Plain Text" },
+          { id: "markdown", label: "Markdown" },
+        ],
+        saveValue: true,
+      },
+    },
   ];
   for (const vertex of vertices) {
     const newVertexInstance = newVertex(vertex.id, ["MetaTemp"], vertex.P);
@@ -457,6 +471,7 @@ function getMetaVertexes(
           graph.vertexes[vertexIds.height],
         ]
       : []),
+    ...(componentName === "Html" ? [graph.vertexes[vertexIds.textType]] : []),
     ...(componentName === "Html" ? [graph.vertexes[vertexIds.text]] : []),
     ...(isParentSlot ? [graph.vertexes[vertexIds.slot]] : []),
     ...(isCurrentComponentSlot ? [graph.vertexes[vertexIds.slot]] : []),

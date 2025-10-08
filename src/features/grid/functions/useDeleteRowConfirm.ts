@@ -94,6 +94,7 @@ function getDeleteEndpoint(tableId: string) {
     case "Page":
     case "Component":
     case "EmailTemplate":
+    case "Function":
       return API.page.deletePageUrl;
     case "Perm":
       return API.permission.deletePermissionUrl;

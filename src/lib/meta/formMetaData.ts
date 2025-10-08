@@ -8,6 +8,7 @@ import { GlobalSetting } from "./base/GlobalSetting";
 import { File, FileTag, Folder } from "./file/File";
 import { Coll } from "./page/Coll";
 import { Page, variantAttributes } from "./page/Page";
+import { Function } from "./page/Function";
 import { PROPERTIES } from "~/pages/settings/constants";
 
 const FormMetaDataAuth: { [key: string]: IFormMetaData } = {
@@ -28,6 +29,7 @@ export const FormMetaData: { [key: string]: IFormMetaData } = {
   File: File,
   FileTag: FileTag,
   Folder: Folder,
+  Function: Function,
   GlobalSetting: GlobalSetting,
   Page: Page,
 };

@@ -2,6 +2,7 @@ import { findUserByEmailOrUuid } from "~/cypher/mutate/user/findUserByEmailOrUui
 import { getDBSessionForSubdomain } from "~/cypher/session/getSessionForSubdomain";
 import { handleAPIError } from "~/lib/api/server/apiErrorHandler";
 import { getUserFromSession } from "~/server/auth/session/getUserFromSession";
+import { updateRedirectUrl } from "~/routes/api/auth/(user)/functions/updateRedirectUrl";
 
 export async function getUserRPC() {
   "use server";
@@ -21,6 +22,11 @@ export async function getUserRPC() {
     if (data.user) {
       data.user.P.subDomain = subDomain;
       delete data.user.P.password;
+
+      // Use the globalSetting returned from findUserByEmailOrUuid
+      const configuredRedirectUrl = data.globalSetting?.P?.redirectUrlAfterSignin;
+
+      updateRedirectUrl(data.user, subDomain!, configuredRedirectUrl);
     }
 
     return data;

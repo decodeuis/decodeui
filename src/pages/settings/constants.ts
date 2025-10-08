@@ -62,6 +62,18 @@ export const SETTINGS_CONSTANTS = {
           border-radius: 4px;
           cursor: pointer;
           border: 1px solid \${args.theme.var.color.border};
+          transition: all 0.2s ease;
+
+          &:hover:not(:disabled) {
+            background-color: \${args.theme.var.color.background_light_300};
+            border-color: \${args.theme.var.color.border_dark_100};
+          }
+
+          &:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px \${args.theme.var.color.primary}33;
+            border-color: \${args.theme.var.color.primary};
+          }
         }\`;`,
       DELETE_CSS: `return \`._id {
           background-color: \${args.theme.var.color.error};
@@ -70,6 +82,16 @@ export const SETTINGS_CONSTANTS = {
           border-radius: 4px;
           cursor: pointer;
           border: none;
+          transition: all 0.2s ease;
+
+          &:hover:not(:disabled) {
+            background-color: \${args.theme.var.color.error_dark_100};
+          }
+
+          &:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px \${args.theme.var.color.error}33;
+          }
         }\`;`,
       SAVE_CSS: `return \`._id {
           background-color: \${args.theme.var.color.primary};
@@ -78,6 +100,23 @@ export const SETTINGS_CONSTANTS = {
           border-radius: 4px;
           cursor: pointer;
           border: none;
+          transition: all 0.2s ease;
+
+          &:hover:not(:disabled) {
+            background-color: \${args.theme.var.color.primary_dark_100};
+          }
+
+          &:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px \${args.theme.var.color.primary}33;
+          }
+
+          &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: \${args.theme.var.color.background_light_300};
+            color: \${args.theme.var.color.background_light_300_text};
+          }
         }\`;`,
     },
     CONTAINER_CSS: `return \`._id {

@@ -593,7 +593,7 @@ export function DataGrid(props: Readonly<DataGridProps>) {
                 onLoadMore={(skip, limit) => {
                   void loadMoreData(skip, limit);
                 }}
-                rowsPerPageOptions={[5, 10, 15]}
+                rowsPerPageOptions={[10, 20, 50, 100, 200, 300, 400, 500]}
                 selectedRows={gridState.selectedRows}
                 setSelectedRows={(rows: Vertex[]) =>
                   setGridState("selectedRows", rows)

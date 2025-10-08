@@ -338,8 +338,8 @@ export const getComponentFormSchema = (
         componentName: "Html",
       },
     ],
-    componentName: "Data",
-    name: "modalState",
+    componentName: "Html",
+    contextName: "modalState",
 
     props: () => ({
       data: createSolidJsStore({

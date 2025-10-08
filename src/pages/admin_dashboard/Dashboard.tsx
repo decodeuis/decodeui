@@ -35,6 +35,7 @@ export default function AdminDashboard() {
     const baseTabs: TabItem[] = [
       { id: "Page", label: "Pages", icon: "ph:file-text" },
       { id: "Component", label: "Components", icon: "ph:puzzle-piece" },
+      { id: "Function", label: "Functions", icon: "ph:function" },
     ];
 
     // Only add the EmailTemplate tab if the user has admin role

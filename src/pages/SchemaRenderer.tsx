@@ -10,6 +10,7 @@ export function SchemaRenderer(props: {
   form: IFormMetaData;
   formDataId?: string;
   getFormData?: () => Promise<ServerResult>;
+  hideSaveCancelButton?: boolean;
   txnId?: string;
 }) {
   const [graph, setGraph] = useGraph();
@@ -23,7 +24,7 @@ export function SchemaRenderer(props: {
       formDataId={props.formDataId}
       formMetaId={formMeta.vertex?.id}
       getFormData={props.getFormData}
-      hideSaveCancelButton={true}
+      hideSaveCancelButton={props.hideSaveCancelButton ?? true}
       isNoPermissionCheck={true}
       metaTxnId={metaTxnId}
       pageVertexName="SchemaRenderer"

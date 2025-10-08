@@ -28,6 +28,7 @@ export function ComponentList(props: {
   onDoubleClick?: (fromVertex: Vertex) => void;
   rootExpression?: string;
   rootVertexes?: Vertex[];
+  hideActionButtons?: boolean;
 }) {
   const [graph, setGraph] = useGraph();
   const [searchQuery, setSearchQuery] = createSignal("");
@@ -199,6 +200,7 @@ export function ComponentList(props: {
                   previewPageId={previewPageId()}
                   setPreviewPageId={setPreviewPageId}
                   toggleExpand={toggleExpand}
+                  hideActionButtons={props.hideActionButtons}
                 />
               </As>
             )}

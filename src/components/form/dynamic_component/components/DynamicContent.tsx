@@ -31,7 +31,6 @@ type ContentProps = {
   component: () => any;
   processedText: () => string | undefined;
   disabled?: boolean;
-  readOnly: () => boolean | undefined;
   ref: () => HTMLElement | null;
   setRef: (ref: HTMLElement | null) => void;
   isNoPermissionCheck: () => boolean;
@@ -76,9 +75,8 @@ export function Content(props: ContentProps) {
           {...props.permissions()}
           component={props.component()}
           text={props.processedText()}
-          disabled={props.disabled}
-          props={null}
-          readOnly={props.readOnly()}
+          // disabled={props.disabled || undefined}
+          // props={null}
           ref={mergeRefs(props.setRef, props.dynamicProps().ref)}
         >
           <Show

@@ -389,8 +389,8 @@ display: flex;
         componentName: "Html",
       },
     ],
-    componentName: "Data",
-    name: "saveState",
+    componentName: "Html",
+    contextName: "saveState",
     props: () => ({
       data: createStore<SaveState>({
         isLoading: false,

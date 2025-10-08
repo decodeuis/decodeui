@@ -1,5 +1,5 @@
-import { useNavigate, useSearchParams } from "@solidjs/router";
-import { onMount } from "solid-js";
+import { useNavigate, createAsync, useSearchParams } from "@solidjs/router";
+import { onMount, Show } from "solid-js";
 import { createStore } from "solid-js/store";
 import createFocusTrap from "solid-focus-trap";
 
@@ -8,6 +8,7 @@ import type { FunctionArgumentType } from "~/components/form/type/FieldSchemaTyp
 import { API } from "~/lib/api/endpoints";
 import { postAPI } from "~/lib/api/general/postApi";
 import { wrapFormInCard } from "~/lib/schema/wrapFormInCard";
+import { getUserRPC } from "~/routes/api/auth/(user)/getUserRPC";
 
 import { SchemaRenderer } from "../SchemaRenderer";
 import { STYLES } from "../settings/constants";
@@ -38,6 +39,24 @@ interface SignInFormFunctionArgumentType extends FunctionArgumentType {
 export function SignInForm() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  // Check if user is already logged in
+  const authData = createAsync(async () => {
+    try {
+      const userData = await getUserRPC();
+      if (userData?.user && !userData.error) {
+        // User is logged in, redirect them
+        // Use redirectUrl from query params if present, otherwise use the one from getUserRPC
+        const redirectUrl = searchParams.redirectUrl || userData.user.P.redirectUrl;
+
+        navigate(redirectUrl, { replace: true });
+        return userData;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
 
   // Use our utility hooks
   const [showPassword, toggleVisibility] = usePasswordVisibility(["password"]);
@@ -189,8 +208,8 @@ export function SignInForm() {
                 type: "button",
               },
             ],
-            componentName: "Data",
-            name: "submitState",
+            componentName: "Html",
+            contextName: "submitState",
 
             props: () => ({
               data: createStore<{ isLoading: boolean }>({
@@ -245,26 +264,28 @@ export function SignInForm() {
   };
 
   return (
-    <SchemaRenderer
-      form={{
-        attributes: [
-          {
-            ...wrapFormInCard(form),
-            props: (options: FunctionArgumentType) => ({
-              beforeMount: () => {
-                createFocusTrap({
-                  element: options.ref,
-                  observeChanges: true,
-                  restoreFocus: true,
-                  initialFocusElement: () =>
-                    document.getElementsByTagName("input")[0],
-                });
-              },
-            }),
-          },
-        ],
-        key: "Login",
-      }}
-    />
+    <Show when={authData() === null}>
+      <SchemaRenderer
+        form={{
+          attributes: [
+            {
+              ...wrapFormInCard(form),
+              props: (options: FunctionArgumentType) => ({
+                beforeMount: () => {
+                  createFocusTrap({
+                    element: options.ref,
+                    observeChanges: true,
+                    restoreFocus: true,
+                    initialFocusElement: () =>
+                      document.getElementsByTagName("input")[0],
+                  });
+                },
+              }),
+            },
+          ],
+          key: "Login",
+        }}
+      />
+    </Show>
   );
 }

@@ -8,6 +8,7 @@ import type { DynamicPropsType } from "~/components/form/dynamic_component/funct
 export function createMergedClasses(
   props: {
     meta: Vertex;
+    class?: string;
   },
   options: {
     dynamicProps: () => DynamicPropsType;
@@ -42,6 +43,13 @@ export function createMergedClasses(
         classes.class = `${classes.class} ${options.styleId}`;
       } else {
         classes.class = options.styleId;
+      }
+    }
+    if (props.class) {
+      if (classes.class) {
+        classes.class = `${props.class} ${classes.class}`;
+      } else {
+        classes.class = props.class;
       }
     }
 

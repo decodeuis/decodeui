@@ -72,6 +72,25 @@ export function GeneralSettings() {
         css: SETTINGS_CONSTANTS.GRID_ITEM_CSS,
         componentName: "Html",
       },
+      {
+        as: "div",
+        attributes: [
+          {
+            as: "span",
+            css: SETTINGS_CONSTANTS.LABEL_CSS,
+            componentName: "Html",
+            text: "Redirect URL After Signin",
+          },
+          {
+            css: PROPERTIES.Css.TextFieldCss,
+            componentName: "SystemTextInput",
+            key: "redirectUrlAfterSignin",
+            placeholder: "Enter URL to redirect after signin (optional)",
+          },
+        ],
+        css: SETTINGS_CONSTANTS.GRID_ITEM_CSS,
+        componentName: "Html",
+      },
       /*{
         as: "div",
         attributes: [
@@ -132,8 +151,8 @@ export function GeneralSettings() {
                 }),
               },
             ],
-            componentName: "Data",
-            name: "saveState",
+            componentName: "Html",
+            contextName: "saveState",
 
             props: () => ({
               data: createStore({

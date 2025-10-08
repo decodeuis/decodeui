@@ -44,11 +44,12 @@ export function DialogWithButtons(
           </Show>
           <As
             as="button"
-            autofocus
+            ref={el=>{
+              setTimeout(() => el.focus(), 200)
+            }}
             css={[SETTINGS_CONSTANTS.MODAL.BUTTONS.CANCEL_CSS]}
             onClick={props.onCancel}
             type="button"
-            use:autofocus
           >
             Cancel
           </As>

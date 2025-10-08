@@ -1,3 +1,4 @@
+import { Switch, Match, JSX } from "solid-js";
 import {
   DataContext,
   useDataContext,
@@ -11,16 +12,19 @@ export function DataInternal(props: {
   data: any;
   index: number;
   meta: Vertex;
-  name: string;
+  contextName: string;
   repeaterValue: any;
+  children?: JSX.Element;
+  renderChildren?: boolean;
+  isNoPermissionCheck?: boolean;
 }) {
   const context = useDataContext() || {};
   const repeaterStore = new Proxy(context, {
     get(target, key) {
-      if (key === props.name) {
+      if (key === props.contextName) {
         return props.repeaterValue;
       }
-      if (key === `${props.name}Index`) {
+      if (key === `${props.contextName}Index`) {
         return props.index;
       }
       if (key === "index") {
@@ -31,10 +35,18 @@ export function DataInternal(props: {
   });
   return (
     <DataContext.Provider value={repeaterStore}>
-      <PageAttrRender
-        data={isVertex(props.repeaterValue) ? props.repeaterValue : props.data}
-        metaVertex={props.meta}
-      />
+      <Switch>
+        <Match when={props.renderChildren}>
+          {props.children}
+        </Match>
+        <Match when={true}>
+          <PageAttrRender
+            data={isVertex(props.repeaterValue) ? props.repeaterValue : props.data}
+            metaVertex={props.meta}
+            isNoPermissionCheck={props.isNoPermissionCheck}
+          />
+        </Match>
+      </Switch>
     </DataContext.Provider>
   );
 }

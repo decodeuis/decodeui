@@ -151,8 +151,8 @@ export const popoverWrapperSchema = (
         componentName: "Html",
       },
     ],
-    componentName: "Data",
-    name: "popoverState",
+    componentName: "Html",
+    contextName: "popoverState",
 
     props: () => ({
       data: createStore({

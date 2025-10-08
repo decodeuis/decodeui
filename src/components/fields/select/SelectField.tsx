@@ -11,7 +11,7 @@ import {
 
 import type { FormStoreObject } from "~/components/form/context/FormContext";
 
-import { MultiSelectField, type Option } from "~/components/styled/MultiSelect";
+import { MultiSelectField, type Option, getOptionLabel } from "~/components/styled/MultiSelect";
 import { fetchDataFromDB } from "~/cypher/get/fetchDataFromDB";
 import { usePageRenderContext } from "~/features/page_attr_render/context/PageRenderContext";
 import { getErrorMessage } from "~/lib/api/general/getErrorMessage";
@@ -199,8 +199,7 @@ export function SelectField(
             parsedValue = null;
           } else if (getComponent() === "Select") {
             parsedValue = isObject(value[0])
-              ? // @ts-expect-error ignore
-                value[0][meta().P.valueKey || "id"]
+              ? getOptionLabel(value[0], meta().P.valueKey || "id")
               : value[0];
           } else {
             parsedValue = value;
@@ -282,14 +281,16 @@ export function SelectField(
         selectedValues={() => {
           if (isStaticOptions(meta())) {
             const value = data()?.P[meta().P[IdAttr]];
-            if (!value) {
+            if (value === undefined || value === null) {
               return [];
             }
             if (!Array.isArray(value) && getComponent() === "Select") {
+              const valueKey = meta().P.valueKey ?? "id";
               const option = options().find(
-                (option) =>
-                  (value?.[meta().P.valueKey ?? "id"] || value) ===
-                  (option?.[meta().P.valueKey ?? "id"] || option),
+                (option) => {
+                  const optionValue = getOptionLabel(option, valueKey);
+                  return value === optionValue;
+                }
               );
               return option ? [option] : [{ label: value, value }];
             }

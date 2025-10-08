@@ -7,7 +7,6 @@ type ParsedYamlNode = string | { [key: string]: ParsedYamlNode[] };
 export function getComponentTree(): ComponentNode[] {
   const yamlContent = `- Root:
   - Html
-  - Data
   - Slot
 `;
   // - Table

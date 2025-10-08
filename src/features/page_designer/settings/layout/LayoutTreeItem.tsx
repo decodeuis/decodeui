@@ -6,6 +6,7 @@ import {
   For,
   Show,
   createEffect,
+  onCleanup,
 } from "solid-js";
 
 import type { FormStoreObject } from "~/components/form/context/FormContext";
@@ -46,6 +47,8 @@ import type { Id } from "~/lib/graph/type/id";
 import type { Vertex } from "~/lib/graph/type/vertex";
 import { useGraph } from "~/lib/graph/context/UseGraph";
 import { findVertexByLabelAndUniqueId } from "~/lib/graph/get/sync/entity/findVertex";
+import { DropdownMenu } from "~/components/styled/modal/DropdownMenu";
+import { FunctionEditor } from "../properties/FunctionEditor";
 
 export function LayoutTreeItem(
   props: Readonly<{
@@ -349,6 +352,183 @@ export function LayoutTreeItem(
     return "";
   });
 
+  // Code preview component similar to ComponentPreview
+  const CodePreview = (props: {
+    code: string;
+    icon: string;
+    title: string;
+    keyName: string;
+    language?: string;
+    returnType?: "object" | "string";
+    metaVertex: Vertex;
+  }) => {
+    const [isOpen, setIsOpen] = createSignal(false);
+    const [buttonRef, setButtonRef] = createSignal<HTMLButtonElement>();
+    
+    let timeoutId: number | null = null;
+    
+    onCleanup(() => {
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+      }
+    });
+    
+    const handleButtonClick = (e: MouseEvent) => {
+      e.stopPropagation();
+      setIsOpen(!isOpen());
+    };
+    
+    const handleButtonMouseEnter = (e: MouseEvent) => {
+      e.stopPropagation();
+      
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+      
+      timeoutId = window.setTimeout(() => {
+        setIsOpen(true);
+      }, 500);
+    };
+    
+    const handleButtonMouseLeave = (e: MouseEvent) => {
+      e.stopPropagation();
+      
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+      
+      timeoutId = window.setTimeout(() => {
+        setIsOpen(false);
+      }, 300);
+    };
+    
+    const handleDropdownMouseEnter = (e: MouseEvent) => {
+      e.stopPropagation();
+      
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+    };
+    
+    const handleDropdownMouseLeave = (e: MouseEvent) => {
+      e.stopPropagation();
+      
+      timeoutId = window.setTimeout(() => {
+        setIsOpen(false);
+      }, 300);
+    };
+    
+    // Handle property value changes
+    const handleSetPropertyValue = (meta: Vertex, value: unknown) => {
+      mergeVertexProperties(
+        formStoreVertex()?.P.txnId,
+        props.metaVertex.id,
+        graph,
+        setGraph,
+        {
+          [props.keyName]: value,
+        },
+      );
+      saveUndoPoint(formStoreVertex()?.P.txnId, graph, setGraph);
+    };
+
+    // Check if the code contains "=" or "data:"
+    const hasSpecialContent = () => {
+      const code = props.code || "";
+      return code.includes("=") || code.includes("data:");
+    };
+    
+    return (
+      <>
+        <IconButton
+          css={[
+            ICON_BUTTON_STYLES.baseCss,
+            ICON_BUTTON_STYLES.defaultCss,
+            ICON_BUTTON_STYLES.spacingCss,
+            `return \`._id {
+              background-color: transparent;
+              border: none;
+              ${hasSpecialContent() ? `color: \${args.theme.var.color.warning};` : ""}
+            }\`;`,
+          ]}
+          icon={props.icon}
+          size={16}
+          onClick={handleButtonClick}
+          onMouseEnter={handleButtonMouseEnter}
+          onMouseLeave={handleButtonMouseLeave}
+          ref={setButtonRef}
+          // title={props.title}
+        />
+        
+        <Show when={isOpen() && buttonRef()}>
+          <DropdownMenu
+            css={`return \`._id {
+              max-height: 600px;
+              width: 600px;
+              overflow: hidden;
+              padding: 0;
+            }\`;`}
+            offset={{ crossAxis: 10, mainAxis: 10 }}
+            onClickOutside={() => setIsOpen(false)}
+            onMouseEnter={handleDropdownMouseEnter}
+            onMouseLeave={handleDropdownMouseLeave}
+            parentRef={buttonRef() as HTMLElement}
+            onClick={(e: MouseEvent) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onMouseDown={(e: MouseEvent) => {
+              e.stopPropagation();
+            }}
+          >
+            <As
+              as="div"
+              css={`return \`._id {
+                width: 100%;
+                padding: 1rem;
+                box-sizing: border-box;
+                
+                /* Override FunctionEditor wrapper styles to take full width */
+                & > div {
+                  width: 100% !important;
+                  margin: 0 !important;
+                }
+                
+                /* Ensure Monaco editor takes full width */
+                & .monaco-editor {
+                  width: 100% !important;
+                }
+              }\`;`}
+              onClick={(e: MouseEvent) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+              onMouseDown={(e: MouseEvent) => {
+                e.stopPropagation();
+              }}
+              onMouseUp={(e: MouseEvent) => {
+                e.stopPropagation();
+              }}
+            >
+              <FunctionEditor
+                keyName={props.keyName}
+                label={props.title}
+                language={props.language}
+                returnType={props.returnType}
+                defaultValue={props.code}
+                setPropertyValue={handleSetPropertyValue}
+                vertexId={props.metaVertex.id}
+              />
+            </As>
+          </DropdownMenu>
+        </Show>
+      </>
+    );
+  };
+
   return (
     <Show when={shouldShowItem()}>
       <TreeItemContainer
@@ -393,6 +573,39 @@ export function LayoutTreeItem(
           parentIndex={props.parentIndex}
           isSelected={isSelectedLayoutId(props.metaVertex.id)}
         />
+        <Show when={props.metaVertex.P.fns}>
+          <CodePreview
+            code={props.metaVertex.P.fns}
+            icon="tabler:function"
+            title="Function Definitions"
+            keyName="fns"
+            language="javascript"
+            returnType="object"
+            metaVertex={props.metaVertex}
+          />
+        </Show>
+        <Show when={props.metaVertex.P.props}>
+          <CodePreview
+            code={props.metaVertex.P.props}
+            icon="tabler:code"
+            title="Props Function"
+            keyName="props"
+            language="javascript"
+            returnType="object"
+            metaVertex={props.metaVertex}
+          />
+        </Show>
+        <Show when={props.metaVertex.P.css}>
+          <CodePreview
+            code={props.metaVertex.P.css}
+            icon="tabler:palette"
+            title="CSS"
+            keyName="css"
+            language="javascript"
+            returnType="string"
+            metaVertex={props.metaVertex}
+          />
+        </Show>
         <Show when={isSelectedHoverId(props.metaVertex.id) || isNodeHidden()}>
           <HideShowIcon iconSize={20} metaVertex={props.metaVertex} />
         </Show>

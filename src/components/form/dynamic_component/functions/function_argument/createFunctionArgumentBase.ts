@@ -4,6 +4,10 @@ import {
   type Component,
   type Owner,
   createSignal,
+  createMemo,
+  createEffect,
+  onCleanup,
+  on
 } from "solid-js";
 import type { FormStoreObject } from "~/components/form/context/FormContext";
 import type { GraphInterface } from "~/lib/graph/context/GraphInterface";
@@ -27,6 +31,8 @@ import { runWithParentOwnerFunction } from "~/components/form/dynamic_component/
 import { useDataContext } from "~/features/page_attr_render/context/DataContext";
 import { getGlobalStore } from "~/lib/graph/get/sync/store/getGlobalStore";
 import { saveUserSetting } from "~/lib/api/saveUserSetting";
+import { executeServerFunction } from "~/cypher/get/executeServerFunction";
+import { executeNamedServerFunction } from "~/cypher/get/executeNamedServerFunction";
 interface ToastFunctions {
   showErrorToast: (message: string) => void;
   showSuccessToast: (message: string) => void;
@@ -54,8 +60,7 @@ export function createFunctionArgumentBase(
     componentName: Accessor<string | Component | undefined>;
     isNoPermissionCheck: () => boolean;
     isViewMode: () => boolean | undefined;
-    isReadOnly: () => boolean | undefined;
-    mounted: () => boolean;
+    mounted: () => boolean | null;
     parentMeta: () => Vertex | undefined;
     ref: () => HTMLElement | null;
     setRef: (ref: HTMLElement | null) => void;
@@ -176,9 +181,6 @@ export function createFunctionArgumentBase(
       return options.parentMeta();
     },
     parentRenderContext: hooks.parentRenderContext(),
-    get readOnly() {
-      return options.isReadOnly();
-    },
     theme: hooks.theme,
     ref: options.ref,
     setRef: options.setRef,
@@ -235,6 +237,10 @@ export function createFunctionArgumentBase(
     zIndex: hooks.zIndex,
     createSignal,
     createStore,
+    createMemo,
+    createEffect,
+    onCleanup,
+    on,
     // Theme toggle functions from useThemeToggle hook
     toggleTheme: hooks.themeToggle.toggleTheme,
     setColorMode: hooks.themeToggle.setColorMode,
@@ -248,5 +254,7 @@ export function createFunctionArgumentBase(
     saveUserSetting: (settings: Record<string, unknown>) => {
       return saveUserSetting(settings, hooks.graph, hooks.setGraph);
     },
+    executeServerFunction,
+    executeNamedServerFunction
   } as Omit<FunctionArgumentType, "parentValue" | "projections" | "value">;
 }

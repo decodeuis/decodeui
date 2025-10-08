@@ -216,8 +216,8 @@ export function CompanySettings() {
                     }),
                   },
                 ],
-                componentName: "Data",
-                name: "saveState",
+                componentName: "Html",
+                contextName: "saveState",
                 props: () => ({
                   data: createStore({
                     isLoading: false,

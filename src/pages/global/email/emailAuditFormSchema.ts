@@ -294,8 +294,8 @@ export const getEmailAuditFormSchema = (onSuccess: () => void) => {
         componentName: "Html",
       },
     ],
-    componentName: "Data",
-    name: "modalState",
+    componentName: "Html",
+    contextName: "modalState",
 
     props: () => ({
       data: createStore<{

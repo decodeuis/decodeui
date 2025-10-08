@@ -39,7 +39,12 @@ export async function POST({ request }: APIEvent) {
     );
     await updateSession(user);
     delete user.P.password;
-    updateRedirectUrl(user, subDomain!);
+
+    // Fetch the configured redirect URL from general settings
+    const generalSettings = await getGeneralSettings(dbSession);
+    const configuredRedirectUrl = generalSettings?.P?.redirectUrlAfterSignin;
+
+    updateRedirectUrl(user, subDomain!, configuredRedirectUrl);
 
     // Fire and forget the email sending process
     // sendNotificationEmail(EMAIL_TEMPLATES.LOGIN_NOTIFICATION,{}, "New Login to Your Account", user, subDomain!).catch(error => {
@@ -134,4 +139,20 @@ async function comparePassword(user: Vertex, password: string) {
   }
 
   return user;
+}
+
+async function getGeneralSettings(dbSession: Session) {
+  try {
+    const result = await dbSession.run(
+      `MATCH (s:GlobalSetting) RETURN s as settings LIMIT 1`
+    );
+
+    const node = result.records[0]?.get("settings");
+    return node ? convertNodeToJson(node) : null;
+  } catch (error) {
+    // If there's an error fetching settings, just return null
+    // This ensures signin still works even if settings aren't configured
+    console.warn("Failed to fetch general settings during signin:", error);
+    return null;
+  }
 }

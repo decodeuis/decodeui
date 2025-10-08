@@ -99,7 +99,7 @@ export function PagesList(props: Readonly<{ coll: string }>) {
         <Match when={data.error}>Error: {data.error}</Match>
         <Match when={!isFetchingData()}>
           <>
-            <Show when={filteredData().length >= 5}>
+            <Show when={filteredData().length >= 5 || searchQuery()}>
               <SearchBar
                 handleChange={(value) => {
                   setSearchQuery(value);

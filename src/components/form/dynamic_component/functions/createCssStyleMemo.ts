@@ -20,6 +20,9 @@ export function createCssStyleMemo(
   const cssStyle = createMemo(() => {
     try {
       const functionArgs = options.getFunctionArgumentWithValue();
+      if (functionArgs.mounted() === false) {
+        return "";
+      }
       return processCssContent(props.meta.P.css, functionArgs, styleId);
     } catch (error) {
       console.error("Error in css:", error);

@@ -14,11 +14,13 @@ import { fetchFormMetaData } from "../functions/fetchFormMetaData";
 import type { PageViewConstants, PageViewWrapperProps } from "./types";
 import type { PreviewStoreObject } from "~/features/page_designer/context/PreviewContext";
 import type { SetStoreFunction } from "solid-js/store";
+import type { ServerResult } from "~/cypher/types/ServerResult";
+import type { IFormMetaData } from "~/lib/meta/FormMetadataType";
 
 interface UseMetadataOptions {
   graph: GraphInterface;
   setGraph: SetStoreFunction<GraphInterface>;
-  constants: PageViewConstants;
+  constants: () => PageViewConstants;
   setFormStore: (key: string, value: unknown) => void;
   metaTxnId: number;
   previewStore: PreviewStoreObject;
@@ -30,10 +32,19 @@ export function useMetadata(
 ) {
   const metaData = createAsync(
     async () => {
-      if (options.constants.pageKeyName === "favicon.ico") {
+      const constants = options.constants();
+      if (constants.pageKeyName === "favicon.ico") {
         return { error: "No meta data found" };
       }
-      if (options.constants.formMetaId) {
+      const fetchFormMetaDataArgs = [
+        constants.pageVertexName,
+        constants.formId,
+        constants.expression,
+        constants.isDesignMode,
+        constants.pageKeyName,
+        constants.url,
+      ] as const;
+      if (constants.formMetaId) {
         if (props.getFormData) {
           try {
             const data = await props.getFormData();
@@ -47,14 +58,7 @@ export function useMetadata(
         }
         return {};
       }
-      const metaResult = await fetchFormMetaData(
-        options.constants.pageVertexName,
-        options.constants.formId,
-        options.constants.expression,
-        options.constants.isDesignMode,
-        options.constants.pageKeyName,
-        options.constants.url,
-      );
+      const metaResult = await fetchFormMetaData(...fetchFormMetaDataArgs);
       if (!metaResult) {
         return { error: "404" };
       }
@@ -62,7 +66,7 @@ export function useMetadata(
         return metaResult;
       }
 
-      let formMetaId = options.constants.formMetaId;
+      let formMetaId = constants.formMetaId;
       if (metaResult.data) {
         if (Array.isArray(metaResult.data.result)) {
           if (metaResult.data.result.length > 0) {
@@ -73,29 +77,29 @@ export function useMetadata(
         }
       }
 
-      const metaVertex = options.constants.formMetaId
-        ? options.graph.vertexes[options.constants.formMetaId]
+      const metaVertex = constants.formMetaId
+        ? options.graph.vertexes[constants.formMetaId]
         : metaResult.data?.graph?.vertexes[formMetaId!];
 
       const isNoPermissionCheck =
-        options.constants.isNoPermissionCheck ||
+        constants.isNoPermissionCheck ||
         metaVertex?.P?.isNoPermissionCheck ||
         options.previewStore.isNoPermissionCheck;
 
       const idLocal =
-        options.constants.dataId === "new"
+        constants.dataId === "new"
           ? undefined
-          : options.constants.dataId;
+          : constants.dataId;
 
-      if (idLocal && !options.constants.getFormData) {
+      if (idLocal && !constants.getFormData) {
         const dataResult = await fetchFormData(
           options.graph,
           metaResult,
-          options.constants.formDataId,
+          constants.formDataId,
           idLocal,
           isNoPermissionCheck,
           true,
-          options.constants.pageVertexName,
+          constants.pageVertexName,
         );
         return { dataResult, formMetaId, metaResult };
       }
@@ -144,11 +148,12 @@ export function useMetadata(
     }
 
     if (metaResult.data) {
+      const constants = options.constants();
       if (
-        options.constants.formId &&
-        options.graph.vertexes[options.constants.formId]
+        constants.formId &&
+        options.graph.vertexes[constants.formId]
       ) {
-        delete metaResult.data.graph!.vertexes[options.constants.formId];
+        delete metaResult.data.graph!.vertexes[constants.formId];
       }
       setGraphData(options.graph, options.setGraph, metaResult.data.graph!);
     }
@@ -169,9 +174,10 @@ export function useMetadata(
     }
     const form = metaResult.form;
     if (!(props.formMetaId || formMetaId || form)) {
+       const constants = options.constants();
       options.setFormStore(
         "error",
-        `${options.constants.pageVertexName} is not configured`,
+        `${constants.pageVertexName} is not configured`,
       );
       return false;
     }

@@ -20,6 +20,7 @@ import {
 import { validateFunction } from "~/lib/validation/validateFunction";
 import { As } from "~/components/As";
 import type { Vertex } from "~/lib/graph/type/vertex";
+import type { Id } from "~/lib/graph/type/id";
 import { useGraph } from "~/lib/graph/context/UseGraph";
 
 // import onigasm from 'onigasm/lib/onigasm.wasm?url';
@@ -65,17 +66,21 @@ export function FunctionEditor(props: {
   returnType?: "object" | "string";
   defaultValue?: string;
   setPropertyValue: (meta: Vertex, value: unknown) => void;
+  vertexId?: Id; // Optional: specific vertex to track instead of selected
 }) {
   const [graph] = useGraph();
   const formStoreId = useDesignerFormIdContext();
   const formStoreVertex = () =>
     graph.vertexes[formStoreId!] as Vertex<FormStoreObject>;
 
+  // Determine which vertex to track - either specific vertex or selected
+  const targetVertexId = () => props.vertexId ?? formStoreVertex()?.P.selectedId;
+
   // Derived state
   const propertyKey = () => props.keyName || "props";
   const getPropertyValue = () => {
     const currentValue =
-      graph.vertexes[formStoreVertex()?.P.selectedId]?.P[propertyKey()];
+      graph.vertexes[targetVertexId()]?.P[propertyKey()];
 
     // If value exists, return it
     if (currentValue !== undefined && currentValue !== null) {
@@ -109,17 +114,31 @@ export function FunctionEditor(props: {
   // Editor reference
   let editorRef: Monaco.editor.IStandaloneCodeEditor | undefined;
 
-  // Update editor value when selected element changes
+  // Update editor value when target element changes or property value changes
   createEffect(
     on(
-      () => formStoreVertex()?.P.selectedId,
       () => {
-        if (formStoreVertex()?.P.selectedId !== -1) {
+        const vertexId = targetVertexId();
+        const propertyValue = vertexId !== -1 && vertexId !== undefined
+          ? graph.vertexes[vertexId]?.P[propertyKey()]
+          : undefined;
+        return { vertexId, propertyValue };
+      },
+      ({ vertexId, propertyValue }) => {
+        if (vertexId !== -1 && vertexId !== undefined) {
           const newValue = getPropertyValue();
           setIsFunctionValid(true);
           setEditorValue(newValue);
           setOriginalValue(newValue);
           setHasChanges(false);
+          
+          // Update Monaco editor if it exists
+          if (editorRef) {
+            const model = editorRef.getModel();
+            if (model && model.getValue() !== newValue) {
+              model.setValue(newValue);
+            }
+          }
         }
       },
       { defer: true },

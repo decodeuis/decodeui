@@ -19,6 +19,9 @@ export function createDynamicPropsMemo(
   },
 ) {
   return createMemo(() => {
+    if (!props.meta) {
+      return {} as DynamicPropsType;
+    }
     try {
       if (typeof props.meta.P.props === "function") {
         const dynamicPropsObj =

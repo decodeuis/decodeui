@@ -24,9 +24,9 @@ export async function fetchComponentDataFromGraph(graphData?: {
     const componentNames = new Set<string>();
 
     for (const vertex of Object.values(vertices)) {
-      if (vertex.L.includes("Attr") && vertex.P.componentName) {
-        // Skip "Html", "Data" and "Slot" components
-        if (!["Html", "Data", "Slot"].includes(vertex.P.componentName)) {
+      if ((vertex.L.includes("Attr") || vertex.L.includes("PageLayout")) && vertex.P.componentName) {
+        // Skip "Html" and "Slot" components
+        if (!["Html", "Slot"].includes(vertex.P.componentName)) {
           componentNames.add(vertex.P.componentName);
         }
       }

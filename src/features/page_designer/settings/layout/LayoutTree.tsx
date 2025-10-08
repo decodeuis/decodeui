@@ -58,25 +58,14 @@ function filterTreeVertex(
 
   const queryLower = query.toLowerCase();
 
-  // Early termination check for direct match - check most common properties first
-  const vertexKey = String(vertex.P?.key || "").toLowerCase();
-  if (vertexKey.includes(queryLower)) {
-    return { match: true, matchedChildren: false };
-  }
-
-  const vertexLayerName = String(vertex.P?.layerName || "").toLowerCase();
-  if (vertexLayerName.includes(queryLower)) {
-    return { match: true, matchedChildren: false };
-  }
-
-  const vertexText = String(vertex.P?.text || "").toLowerCase();
-  if (vertexText.includes(queryLower)) {
-    return { match: true, matchedChildren: false };
-  }
-
-  const vertexAs = String(vertex.P?.as || "").toLowerCase();
-  if (vertexAs.includes(queryLower)) {
-    return { match: true, matchedChildren: false };
+  // Convert entire vertex to JSON string and search
+  try {
+    const vertexString = JSON.stringify(vertex.P || {}).toLowerCase();
+    if (vertexString.includes(queryLower)) {
+      return { match: true, matchedChildren: false };
+    }
+  } catch {
+    // If JSON.stringify fails, fall back to no match
   }
 
   // Get children once instead of repeatedly

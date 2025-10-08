@@ -62,6 +62,7 @@ export function CustomModal(props: Readonly<CustomModalProps>) {
   background-color: transparent;
   border: none;
   color: \${args.theme.var.color.text};
+  cursor: pointer;
   &:hover {
     background-color: \${args.theme.var.color.background_light_200};
   }

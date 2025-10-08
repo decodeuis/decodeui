@@ -16,7 +16,7 @@ export function formSubmit(
   formStoreVertex: () => Vertex<FormStoreObject>,
   graph: GraphInterface,
   setGraph: SetStoreFunction<GraphInterface>,
-  closePopUp: () => void,
+  closePopUp: (action?: string) => void,
   showErrorToast: (message: string) => void,
   showLoadingToast: (options: {
     loadMessage: string;
@@ -105,7 +105,7 @@ export function formSubmit(
 
           // currently we are navigating back.
           if (closePopUp) {
-            closePopUp();
+            closePopUp("Submit");
           } else {
             navigateToParentRoute();
           }
@@ -122,7 +122,7 @@ export function formSubmit(
 
     if (!data) {
       if (closePopUp) {
-        closePopUp();
+        closePopUp("Submit");
       } else {
         navigateToParentRoute();
       }

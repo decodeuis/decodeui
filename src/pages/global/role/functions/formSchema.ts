@@ -226,8 +226,8 @@ export const roleFormSchema = {
           componentName: "Html",
         },
       ],
-      componentName: "Data",
-      name: "tabState",
+      componentName: "Html",
+      contextName: "tabState",
 
       props: () => ({
         data: createStore({
@@ -431,8 +431,8 @@ export const getRoleFormSchema = (onSuccess: () => void) => {
         componentName: "Html",
       },
     ],
-    componentName: "Data",
-    name: "modalState",
+    componentName: "Html",
+    contextName: "modalState",
 
     props: () => ({
       data: createStore({

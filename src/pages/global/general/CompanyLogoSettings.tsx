@@ -296,8 +296,8 @@ export function CompanyLogoSettings() {
                 }),
               },
             ],
-            componentName: "Data",
-            name: "saveState",
+            componentName: "Html",
+            contextName: "saveState",
 
             props: () => ({
               data: createStore<SaveState>({

@@ -194,13 +194,6 @@ export default class JsxParser {
         "key",
         "A",
       )!;
-    } else if (comp === "Data") {
-      componentVertex = findVertexByLabelAndUniqueId(
-        graph,
-        "Comp",
-        "key",
-        "Data",
-      )!;
     } else if (findVertexByLabelAndUniqueId(graph, "Comp", "key", comp)) {
       componentVertex = findVertexByLabelAndUniqueId(
         graph,
